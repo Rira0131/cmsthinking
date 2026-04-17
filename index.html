@@ -2199,12 +2199,22 @@ document.addEventListener('keydown', e => {
 });
 
 function openLightbox(src) {
+  const lb = document.getElementById('img-lightbox');
+  // 전체화면 중이면 라이트박스를 전체화면 요소 안으로 이동 (슬라이드쇼 위에 표시)
+  if (document.fullscreenElement) {
+    document.fullscreenElement.appendChild(lb);
+  } else {
+    document.body.appendChild(lb);
+  }
   document.getElementById('img-lightbox-img').src = src;
-  document.getElementById('img-lightbox').classList.add('open');
+  lb.classList.add('open');
 }
 
 // ── 전역 Ctrl+V 이미지 붙여넣기 ──
 document.addEventListener('paste', function(e) {
+  // 교재 이미지 붙여넣기 모드가 활성화된 경우 활동 이미지에는 추가하지 않음
+  if (_textbookPasteActive) return;
+
   const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
   if (!items) return;
   let imgItem = null;
