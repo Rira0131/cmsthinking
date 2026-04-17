@@ -2376,9 +2376,20 @@ function loadLessonToEditor(id, isCustom) {
 }
 function isMyLesson(l) {
   const myEmail = getCurrentEmail();
-  // author_email 없는 구버전 교안은 편집 허용
-  if (!l.author_email) return true;
-  return l.author_email === myEmail;
+  if (!myEmail) return false;
+  // author_email이 있으면 직접 비교
+  if (l.author_email) return l.author_email === myEmail;
+  // author_email 없는 구버전 교안 → 이름으로 판단
+  const AUTHOR_EMAIL_MAP = {
+    '황지향T':'rira@mjcms.com', '황지향 센터장':'rira@mjcms.com', '황지향':'rira@mjcms.com',
+    '변유진T':'byj@mjcms.com', '변유진':'byj@mjcms.com',
+    '제선영T':'jsy@mjcms.com', '제선영 T':'jsy@mjcms.com', '제선영':'jsy@mjcms.com',
+    '김경미T':'kkm@mjcms.com', '김경미 대리':'kkm@mjcms.com', '김경미':'kkm@mjcms.com',
+    '윤시현T':'ysh@mjcms.com', '윤시현':'ysh@mjcms.com',
+    '이의금T':'leg@dbcms.com', '이의금':'leg@dbcms.com'
+  };
+  const mapped = AUTHOR_EMAIL_MAP[l.author || ''];
+  return mapped ? mapped === myEmail : false;
 }
 
 function editCustomLesson(id) {
