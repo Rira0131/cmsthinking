@@ -506,13 +506,24 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
           </div>
           <div class="form-group">
             <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-              <span>📖 교재 이미지 (발표 시 옆에 표시)</span>
-              <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:var(--primary);color:#fff;border-radius:6px;font-weight:600">
-                + 이미지 추가
-                <input type="file" accept="image/*" multiple style="display:none" onchange="addTextbookImages(this)">
-              </label>
+              <span>📖 교재 이미지 <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(발표 시 옆에 표시)</span></span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-size:11px;color:var(--gray-400)">Ctrl+V 붙여넣기 가능</span>
+                <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:var(--primary);color:#fff;border-radius:6px;font-weight:600;margin:0">
+                  + 파일 추가
+                  <input type="file" accept="image/*" multiple style="display:none" onchange="addTextbookImages(this)">
+                </label>
+              </div>
             </label>
-            <div id="ed-textbook-imgs" class="img-grid" style="min-height:40px"></div>
+            <div id="ed-textbook-paste-zone"
+              style="border:2px dashed var(--gray-200);border-radius:10px;padding:10px;min-height:56px;transition:border-color .2s;cursor:default"
+              onclick="focusTextbookZone()"
+              title="클릭 후 Ctrl+V로 스크린샷 붙여넣기">
+              <div id="ed-textbook-imgs" class="img-grid" style="margin:0"></div>
+              <div id="ed-textbook-hint" style="font-size:12px;color:var(--gray-400);text-align:center;padding:6px 0;pointer-events:none">
+                📋 이 영역 클릭 후 Ctrl+V로 스크린샷을 바로 붙여넣을 수 있어요
+              </div>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
@@ -1448,8 +1459,8 @@ function filterLessons() {
             ${l.author ? `<span class="badge badge-author">${l.author}</span>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
-            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">✏️ 편집</button>
-            <button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})">🗑️ 삭제</button>
+            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${l.custom && !isMyLesson(l) ? '📋 복사' : '✏️ 편집'}</button>
+            ${(!l.custom || isMyLesson(l)) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})">🗑️ 삭제</button>` : ''}
             <span class="chevron">▼</span>
           </div>
         </div>
@@ -1867,6 +1878,7 @@ function addTextbookImgPreview(url) {
   delBtn.textContent = '×';
   delBtn.onclick = async () => {
     div.remove();
+    updateTextbookHint();
     try {
       const fileName = url.split('/').pop().split('?')[0];
       await _sb.storage.from('lesson-images').remove([fileName]);
@@ -1875,7 +1887,57 @@ function addTextbookImgPreview(url) {
   div.appendChild(img);
   div.appendChild(delBtn);
   grid.appendChild(div);
+  updateTextbookHint();
 }
+
+function updateTextbookHint() {
+  const grid = document.getElementById('ed-textbook-imgs');
+  const hint = document.getElementById('ed-textbook-hint');
+  if (!grid || !hint) return;
+  hint.style.display = grid.children.length === 0 ? 'block' : 'none';
+}
+
+// 붙여넣기 포커스 영역 활성화
+let _textbookPasteActive = false;
+function focusTextbookZone() {
+  const zone = document.getElementById('ed-textbook-paste-zone');
+  if (!zone) return;
+  _textbookPasteActive = true;
+  zone.style.borderColor = 'var(--primary)';
+  zone.style.background = 'rgba(99,102,241,.04)';
+  showToast('📋 이제 Ctrl+V로 스크린샷을 붙여넣을 수 있어요');
+}
+
+// 전역 paste 이벤트 - 교재 이미지 영역 활성화 시만 동작
+document.addEventListener('paste', async (e) => {
+  if (!_textbookPasteActive) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of Array.from(items)) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (file) {
+        showToast('📋 스크린샷 업로드 중...');
+        await addTextbookImage(file);
+      }
+      break;
+    }
+  }
+  // 한 번 붙여넣기 후 포커스 해제
+  _textbookPasteActive = false;
+  const zone = document.getElementById('ed-textbook-paste-zone');
+  if (zone) { zone.style.borderColor = ''; zone.style.background = ''; }
+});
+
+// 다른 곳 클릭 시 붙여넣기 모드 해제
+document.addEventListener('click', (e) => {
+  if (_textbookPasteActive && !e.target.closest('#ed-textbook-paste-zone')) {
+    _textbookPasteActive = false;
+    const zone = document.getElementById('ed-textbook-paste-zone');
+    if (zone) { zone.style.borderColor = ''; zone.style.background = ''; }
+  }
+});
 
 // ── 슬라이드쇼 ──
 let _slides = [];
@@ -2113,10 +2175,14 @@ async function saveLesson() {
     }
   });
   
+  const lessonId = document.getElementById('ed-id').value || 'custom_' + Date.now();
+  // 기존 교안이면 center/author_email 원본 유지
+  const existingLesson = _state.customLessons.find(c => c.id === lessonId);
   const lesson = {
-    id: document.getElementById('ed-id').value || 'custom_' + Date.now(),
+    id: lessonId,
     title,
     author: document.getElementById('ed-author').value.trim(),
+    author_email: existingLesson ? (existingLesson.author_email || getCurrentEmail()) : getCurrentEmail(),
     level: document.getElementById('ed-level').value,
     objectives: document.getElementById('ed-objectives').value.trim(),
     teacher_objectives: document.getElementById('ed-teacher-obj').value.trim(),
@@ -2131,7 +2197,7 @@ async function saveLesson() {
     activities,
     materials: [],
     custom: true,
-    center: getCurrentCenter(),
+    center: existingLesson ? (existingLesson.center || getCurrentCenter()) : getCurrentCenter(),
     updatedAt: new Date().toISOString()
   };
   
@@ -2157,6 +2223,7 @@ function resetEditor() {
   document.getElementById('ed-cms').value = '';
   document.getElementById('ed-notes').value = '';
   document.getElementById('ed-textbook-imgs').innerHTML = '';
+  updateTextbookHint();
   document.getElementById('ed-links').innerHTML = '';
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
@@ -2172,9 +2239,10 @@ function loadLessonToEditor(id, isCustom) {
   showPage('editor');
   showEditorTab('write');
 
-  // 내장 자료: id를 비워서 저장 시 새 custom 자료로 생성
-  // custom 자료: 기존 id 유지해서 덮어쓰기
-  document.getElementById('ed-id').value = isCustom ? l.id : '';
+  // 내장 자료: id 비워서 새 custom 자료로 생성
+  // custom 자료: 내 교안이면 id 유지(덮어쓰기), 남의 교안이면 id 비워서 복사
+  const isMineLoad = isCustom ? isMyLesson(l) : false;
+  document.getElementById('ed-id').value = isMineLoad ? l.id : '';
   document.getElementById('ed-title').value = l.title || '';
   document.getElementById('ed-author').value = l.author || '';
   document.getElementById('ed-level').value = l.level || '';
@@ -2192,16 +2260,27 @@ function loadLessonToEditor(id, isCustom) {
 
   if (!isCustom) {
     showToast('📋 내장 자료를 불러왔어요. 수정 후 저장하면 내 자료로 등록됩니다.');
+  } else if (!isMineLoad) {
+    showToast(`📋 ${l.author || '다른 선생님'}의 교안을 복사합니다. 저장하면 내 교안으로 새로 등록됩니다.`);
   }
   window.scrollTo(0, 0);
 }
+function isMyLesson(l) {
+  const myEmail = getCurrentEmail();
+  // author_email 없는 구버전 교안은 편집 허용
+  if (!l.author_email) return true;
+  return l.author_email === myEmail;
+}
+
 function editCustomLesson(id) {
   const customs = getCustomLessons();
   const l = customs.find(c => c.id === id);
   if (!l) return;
-  
+
+  const isMine = isMyLesson(l);
   showEditorTab('write');
-  document.getElementById('ed-id').value = l.id;
+  // 내 교안이 아니면 ID 비워서 새 교안으로 저장되게 함
+  document.getElementById('ed-id').value = isMine ? l.id : '';
   document.getElementById('ed-title').value = l.title;
   document.getElementById('ed-author').value = l.author;
   document.getElementById('ed-level').value = l.level;
@@ -2219,6 +2298,9 @@ function editCustomLesson(id) {
   (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
 
+  if (!isMine) {
+    showToast(`📋 ${l.author || '다른 선생님'}의 교안을 복사합니다. 저장하면 내 교안으로 새로 등록됩니다.`);
+  }
   window.scrollTo(0, 0);
 }
 
@@ -2237,6 +2319,8 @@ function deleteAnyLesson(id, isCustom) {
   }
 }
 async function deleteCustomLesson(id) {
+  const l = _state.customLessons.find(c => c.id === id);
+  if (l && !isMyLesson(l)) { showToast('⛔ 다른 선생님의 교안은 삭제할 수 없습니다'); return; }
   if (!confirm('정말 삭제하시겠습니까?')) return;
   _state.customLessons = _state.customLessons.filter(c => c.id !== id);
   window._justSaved = Date.now();
@@ -2266,14 +2350,15 @@ function renderMyLessons() {
   </div>`;
   customs.forEach(l => {
     const date = l.updatedAt ? new Date(l.updatedAt).toLocaleDateString('ko-KR') : '';
+    const mine = isMyLesson(l);
     html += `<div class="my-lesson-item">
       <div class="my-lesson-info">
-        <h4>${l.title}</h4>
+        <h4>${l.title} ${mine ? '' : '<span style="font-size:11px;color:var(--gray-400);font-weight:400">(타 센터)</span>'}</h4>
         <p>${l.level} · ${l.author} ${date ? '· ' + date : ''}</p>
       </div>
       <div class="my-lesson-actions">
-        <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>
+        <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
+        ${mine ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>` : ''}
       </div>
     </div>`;
   });
@@ -2281,7 +2366,6 @@ function renderMyLessons() {
 }
 
 function showAllLessons() {
-  // 전체 보기 - 임시로 필터 해제하고 렌더링
   const container = document.getElementById('my-lessons-list');
   const allCustoms = getCustomLessons();
   let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;padding:8px 12px;background:var(--gray-50);border-radius:8px">
@@ -2290,14 +2374,15 @@ function showAllLessons() {
   </div>`;
   allCustoms.forEach(l => {
     const date = l.updatedAt ? new Date(l.updatedAt).toLocaleDateString('ko-KR') : '';
+    const mine = isMyLesson(l);
     html += `<div class="my-lesson-item">
       <div class="my-lesson-info">
-        <h4>${l.title}</h4>
+        <h4>${l.title} ${mine ? '<span style="font-size:11px;color:var(--primary);font-weight:600">내 교안</span>' : `<span style="font-size:11px;color:var(--gray-400)">${l.author || '?'}</span>`}</h4>
         <p>${l.level} · ${l.author} ${date ? '· ' + date : ''}</p>
       </div>
       <div class="my-lesson-actions">
-        <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>
+        <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
+        ${mine ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>` : ''}
       </div>
     </div>`;
   });
