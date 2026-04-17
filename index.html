@@ -1479,8 +1479,8 @@ function filterLessons() {
             ${l.author ? `<span class="badge badge-author">${l.author}</span>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
-            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${l.custom && !isMyLesson(l) ? '📋 복사' : '✏️ 편집'}</button>
-            ${(!l.custom || isMyLesson(l)) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})">🗑️ 삭제</button>` : ''}
+            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${isMyLesson(l) ? '✏️ 편집' : '📋 복사'}</button>
+            ${isMyLesson(l) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})">🗑️ 삭제</button>` : ''}
             <span class="chevron">▼</span>
           </div>
         </div>
