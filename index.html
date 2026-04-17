@@ -236,6 +236,20 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 #img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:none;align-items:center;justify-content:center;cursor:zoom-out}
 #img-lightbox.open{display:flex}
 #img-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+/* ── 아코디언 섹션 ── */
+.accordion-section{border:1.5px solid var(--gray-200);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.accordion-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-50);cursor:pointer;user-select:none;gap:8px}
+.accordion-header:hover{background:#f0f0f5}
+.accordion-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--gray-700)}
+.accordion-badge{background:var(--primary);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;min-width:18px;text-align:center}
+.accordion-badge.empty{background:var(--gray-200);color:var(--gray-500)}
+.accordion-actions{display:flex;align-items:center;gap:6px}
+.accordion-arrow{font-size:11px;color:var(--gray-400);transition:transform .2s;flex-shrink:0}
+.accordion-body{display:none;padding:12px 14px;border-top:1px solid var(--gray-200)}
+.accordion-section.open .accordion-body{display:block}
+.accordion-section.open .accordion-arrow{transform:rotate(180deg)}
+.accordion-section.open .accordion-header{background:#f5f3ff}
+.accordion-section.open{border-color:var(--primary)}
 /* ── 첨부파일 ── */
 .attach-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;margin-bottom:6px}
 .attach-icon{font-size:20px;flex-shrink:0}
@@ -514,43 +528,72 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
             <label class="form-label">비고 (건의, 제언)</label>
             <textarea class="form-textarea" id="ed-notes" placeholder="수업 시 참고사항, 건의사항 등"></textarea>
           </div>
-          <div class="form-group">
-            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-              <span>📖 교재 이미지 <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(발표 시 옆에 표시)</span></span>
-              <div style="display:flex;gap:6px;align-items:center">
-                <span style="font-size:11px;color:var(--gray-400)">Ctrl+V 붙여넣기 가능</span>
+          <!-- 교재 이미지 아코디언 -->
+          <div class="accordion-section" id="acc-textbook">
+            <div class="accordion-header" onclick="toggleAccordion('acc-textbook')">
+              <div class="accordion-title">
+                📖 교재 이미지
+                <span class="accordion-badge empty" id="acc-textbook-badge">0</span>
+                <span style="font-size:11px;font-weight:400;color:var(--gray-500)">발표 시 옆에 표시</span>
+              </div>
+              <div class="accordion-actions" onclick="event.stopPropagation()">
+                <span style="font-size:11px;color:var(--gray-400)">Ctrl+V 가능</span>
                 <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:var(--primary);color:#fff;border-radius:6px;font-weight:600;margin:0">
-                  + 파일 추가
+                  + 추가
                   <input type="file" accept="image/*" multiple style="display:none" onchange="addTextbookImages(this)">
                 </label>
               </div>
-            </label>
-            <div id="ed-textbook-paste-zone"
-              style="border:2px dashed var(--gray-200);border-radius:10px;padding:10px;min-height:56px;transition:border-color .2s;cursor:default"
-              onclick="focusTextbookZone()"
-              title="클릭 후 Ctrl+V로 스크린샷 붙여넣기">
-              <div id="ed-textbook-imgs" class="img-grid" style="margin:0"></div>
-              <div id="ed-textbook-hint" style="font-size:12px;color:var(--gray-400);text-align:center;padding:6px 0;pointer-events:none">
-                📋 이 영역 클릭 후 Ctrl+V로 스크린샷을 바로 붙여넣을 수 있어요
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <div id="ed-textbook-paste-zone"
+                style="border:2px dashed var(--gray-200);border-radius:10px;padding:10px;min-height:56px;transition:border-color .2s;cursor:default"
+                onclick="focusTextbookZone()"
+                title="클릭 후 Ctrl+V로 스크린샷 붙여넣기">
+                <div id="ed-textbook-imgs" class="img-grid" style="margin:0"></div>
+                <div id="ed-textbook-hint" style="font-size:12px;color:var(--gray-400);text-align:center;padding:6px 0;pointer-events:none">
+                  📋 이 영역 클릭 후 Ctrl+V로 스크린샷을 바로 붙여넣을 수 있어요
+                </div>
               </div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-              <span>📎 첨부파일 <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(pptx, pdf, hwp 등 · 최대 20MB)</span></span>
-              <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:#6366f1;color:#fff;border-radius:6px;font-weight:600;margin:0">
-                + 파일 첨부
-                <input type="file" accept=".pptx,.ppt,.pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.zip" multiple style="display:none" onchange="addAttachments(this)">
-              </label>
-            </label>
-            <div id="ed-attachments"></div>
+          <!-- 첨부파일 아코디언 -->
+          <div class="accordion-section" id="acc-attach">
+            <div class="accordion-header" onclick="toggleAccordion('acc-attach')">
+              <div class="accordion-title">
+                📎 첨부파일
+                <span class="accordion-badge empty" id="acc-attach-badge">0</span>
+                <span style="font-size:11px;font-weight:400;color:var(--gray-500)">pptx, pdf, hwp 등 · 최대 20MB</span>
+              </div>
+              <div class="accordion-actions" onclick="event.stopPropagation()">
+                <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:#6366f1;color:#fff;border-radius:6px;font-weight:600;margin:0">
+                  + 첨부
+                  <input type="file" accept=".pptx,.ppt,.pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.zip" multiple style="display:none" onchange="addAttachments(this)">
+                </label>
+              </div>
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <div id="ed-attachments"></div>
+              <div id="ed-attach-hint" style="font-size:12px;color:var(--gray-400);text-align:center;padding:4px 0">첨부된 파일이 없습니다</div>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-              <span>참고 링크</span>
-              <button type="button" class="btn btn-sm" onclick="addLinkRow()" style="padding:3px 10px;font-size:12px">+ 링크 추가</button>
-            </label>
-            <div id="ed-links" style="display:flex;flex-direction:column;gap:8px"></div>
+          <!-- 참고 링크 아코디언 -->
+          <div class="accordion-section" id="acc-links">
+            <div class="accordion-header" onclick="toggleAccordion('acc-links')">
+              <div class="accordion-title">
+                🔗 참고 링크
+                <span class="accordion-badge empty" id="acc-links-badge">0</span>
+              </div>
+              <div class="accordion-actions" onclick="event.stopPropagation()">
+                <button type="button" class="btn btn-sm" onclick="addLinkRow()" style="padding:3px 10px;font-size:12px">+ 추가</button>
+              </div>
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <div id="ed-links" style="display:flex;flex-direction:column;gap:8px"></div>
+              <div id="ed-links-hint" style="font-size:12px;color:var(--gray-400);text-align:center;padding:4px 0">등록된 링크가 없습니다</div>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
@@ -1892,6 +1935,47 @@ async function uploadAttachment(file) {
   }
 }
 
+// ── Accordion helpers ──
+function toggleAccordion(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+function updateAccordionBadge(badgeId, count) {
+  const badge = document.getElementById(badgeId);
+  if (!badge) return;
+  badge.textContent = count;
+  badge.className = 'accordion-badge' + (count === 0 ? ' empty' : '');
+}
+function refreshTextbookBadge() {
+  const grid = document.getElementById('ed-textbook-imgs');
+  const count = grid ? grid.querySelectorAll('.img-thumb').length : 0;
+  updateAccordionBadge('acc-textbook-badge', count);
+}
+function refreshAttachBadge() {
+  const container = document.getElementById('ed-attachments');
+  const count = container ? container.querySelectorAll('.attach-item').length : 0;
+  updateAccordionBadge('acc-attach-badge', count);
+}
+function refreshLinksBadge() {
+  const container = document.getElementById('ed-links');
+  const count = container ? container.querySelectorAll('.link-row').length : 0;
+  updateAccordionBadge('acc-links-badge', count);
+}
+function openAccordionIfContent(id, count) {
+  const sec = document.getElementById(id);
+  if (!sec) return;
+  if (count > 0) sec.classList.add('open');
+  else sec.classList.remove('open');
+}
+function resetAllAccordions() {
+  ['acc-textbook','acc-attach','acc-links'].forEach(id => {
+    const sec = document.getElementById(id);
+    if (sec) sec.classList.remove('open');
+  });
+  updateAccordionBadge('acc-textbook-badge', 0);
+  updateAccordionBadge('acc-attach-badge', 0);
+  updateAccordionBadge('acc-links-badge', 0);
+}
+
 function addAttachmentRow(name, url, size) {
   const container = document.getElementById('ed-attachments');
   if (!container) return;
@@ -1909,10 +1993,12 @@ function addAttachmentRow(name, url, size) {
     <button class="attach-del" title="삭제" onclick="removeAttachment(this, '${url}')">×</button>
   `;
   container.appendChild(div);
+  refreshAttachBadge();
 }
 
 async function removeAttachment(btn, url) {
   btn.closest('.attach-item').remove();
+  refreshAttachBadge();
   try {
     const fileName = url.split('/').pop().split('?')[0];
     await _sb.storage.from('lesson-images').remove([fileName]);
@@ -1998,6 +2084,7 @@ function updateTextbookHint() {
   const hint = document.getElementById('ed-textbook-hint');
   if (!grid || !hint) return;
   hint.style.display = grid.children.length === 0 ? 'block' : 'none';
+  refreshTextbookBadge();
 }
 
 // 붙여넣기 포커스 영역 활성화
@@ -2260,9 +2347,10 @@ function addLinkRow(label='', url='') {
   row.innerHTML = `
     <input type="text" class="form-input link-label" placeholder="링크 제목 (선택)" value="${label}" style="flex:1;min-width:0">
     <input type="url" class="form-input link-url" placeholder="https://" value="${url}" style="flex:2;min-width:0">
-    <button type="button" onclick="this.parentElement.remove()" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:20px;padding:0 4px;line-height:1" title="삭제">×</button>
+    <button type="button" onclick="this.parentElement.remove();refreshLinksBadge()" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:20px;padding:0 4px;line-height:1" title="삭제">×</button>
   `;
   container.appendChild(row);
+  refreshLinksBadge();
 }
 
 async function saveLesson() {
@@ -2345,6 +2433,7 @@ function resetEditor() {
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
   addActivityEditor();
+  resetAllAccordions();
 }
 
 function loadLessonToEditor(id, isCustom) {
@@ -2376,6 +2465,11 @@ function loadLessonToEditor(id, isCustom) {
   activityCount = 0;
   (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
+
+  // 아코디언: 내용 있는 섹션 자동 열기
+  openAccordionIfContent('acc-textbook', (l.textbook_images || []).length);
+  openAccordionIfContent('acc-attach', (l.attachments || []).length);
+  openAccordionIfContent('acc-links', (l.links || []).length);
 
   if (!isCustom) {
     showToast('📋 내장 자료를 불러왔어요. 수정 후 저장하면 내 자료로 등록됩니다.');
@@ -2429,6 +2523,11 @@ function editCustomLesson(id) {
   activityCount = 0;
   (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
+
+  // 아코디언: 내용 있는 섹션 자동 열기
+  openAccordionIfContent('acc-textbook', (l.textbook_images || []).length);
+  openAccordionIfContent('acc-attach', (l.attachments || []).length);
+  openAccordionIfContent('acc-links', (l.links || []).length);
 
   if (!isMine) {
     showToast(`📋 ${l.author || '다른 선생님'}의 교안을 복사합니다. 저장하면 내 교안으로 새로 등록됩니다.`);
