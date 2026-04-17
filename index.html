@@ -1011,6 +1011,18 @@ function captureEditValues() {
     });
   });
 }
+function applyDateToWeek(dateInput, mi, wi) {
+  if (!dateInput.value) return;
+  const d = new Date(dateInput.value + 'T00:00:00');
+  const formatted = `${d.getMonth() + 1}/${d.getDate()}`;
+  const wkEl = document.getElementById(`wk-${mi}-${wi}`);
+  if (!wkEl) return;
+  const current = wkEl.value;
+  // 기존 (M/D) 부분이 있으면 교체, 없으면 뒤에 추가
+  const replaced = current.replace(/\(\d+\/\d+\)/, `(${formatted})`);
+  wkEl.value = replaced !== current ? replaced : current + `(${formatted})`;
+}
+
 function saveScheduleEdit() {
   captureEditValues();
   saveScheduleData(_editSchedule);
@@ -1233,7 +1245,8 @@ function renderSchedule() {
         const slotCols = `grid-template-columns:90px repeat(${slots.length},minmax(170px,1fr));min-width:${90 + slots.length * 170}px`;
         html += `<div class="week-row edit-week-row" style="${slotCols}">
           <div class="week-label" style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;min-width:90px">
-            <input class="edit-input" id="wk-${mi}-${wi}" value="${(w.week||'').replace(/"/g,'&quot;')}" placeholder="예: 1주(3/6)" style="font-size:12px;text-align:center">
+            <input class="edit-input" id="wk-${mi}-${wi}" value="${(w.week||'').replace(/"/g,'&quot;')}" placeholder="예: 1주(4/1)" style="font-size:12px;text-align:center">
+            <input type="date" title="날짜 선택" onchange="applyDateToWeek(this,'${mi}','${wi}')" style="font-size:10px;width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:2px 4px;cursor:pointer;color:#6b7280;margin-top:1px">
             <button class="week-del-btn" onclick="removeWeek(${mi},${wi})">🗑️ 삭제</button>
             <button class="week-del-btn" onclick="addSlot(${mi},${wi})" style="border-color:var(--primary);color:var(--primary)">＋ 추가</button>
           </div>
