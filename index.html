@@ -244,7 +244,17 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-counter{color:#a5b4fc;font-size:13px}
 .slide-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .slide-close:hover{background:rgba(255,255,255,.25)}
-.slide-area{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 80px;overflow:hidden;position:relative}
+.slide-book-btn{background:rgba(255,255,255,.12);border:none;color:#c7d2fe;padding:5px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s;white-space:nowrap}
+.slide-book-btn:hover,.slide-book-btn.active{background:rgba(99,102,241,.5);color:#fff}
+.slide-main-row{flex:1;display:flex;overflow:hidden;min-height:0}
+.slide-area{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 80px;overflow:hidden;position:relative;transition:flex .3s}
+#textbook-panel{width:320px;flex-shrink:0;background:rgba(0,0,0,.35);border-left:1px solid rgba(255,255,255,.1);display:none;flex-direction:column;overflow-y:auto}
+#textbook-panel.open{display:flex}
+#textbook-panel .tb-header{padding:16px 16px 10px;color:#a5b4fc;font-size:13px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+#textbook-panel .tb-imgs{padding:14px;display:flex;flex-direction:column;gap:10px}
+#textbook-panel .tb-img-wrap{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+#textbook-panel .tb-img-wrap img{width:100%;display:block;cursor:zoom-in}
+#textbook-panel .tb-empty{padding:24px 16px;color:#64748b;font-size:13px;text-align:center}
 .slide-content{width:100%;max-width:900px;animation:slideIn .25s ease}
 @keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .slide-title-card{text-align:center;color:#fff}
@@ -496,6 +506,16 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
           </div>
           <div class="form-group">
             <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+              <span>📖 교재 이미지 (발표 시 옆에 표시)</span>
+              <label class="btn btn-sm" style="padding:3px 10px;font-size:12px;cursor:pointer;background:var(--primary);color:#fff;border-radius:6px;font-weight:600">
+                + 이미지 추가
+                <input type="file" accept="image/*" multiple style="display:none" onchange="addTextbookImages(this)">
+              </label>
+            </label>
+            <div id="ed-textbook-imgs" class="img-grid" style="min-height:40px"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
               <span>참고 링크</span>
               <button type="button" class="btn btn-sm" onclick="addLinkRow()" style="padding:3px 10px;font-size:12px">+ 링크 추가</button>
             </label>
@@ -566,15 +586,24 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
   <div class="slide-topbar">
     <div class="slide-topbar-title" id="slide-lesson-title"></div>
     <div style="display:flex;align-items:center;gap:12px">
+      <button class="slide-book-btn" id="slide-book-btn" onclick="toggleTextbookPanel()" title="교재 이미지 패널" style="display:none">📖 교재</button>
       <div class="slide-counter" id="slide-counter"></div>
       <button class="slide-close" onclick="closeSlideshow()" title="닫기 (ESC)">✕</button>
     </div>
   </div>
-  <div class="slide-area" id="slide-area"></div>
-  <div class="slide-nav">
-    <button class="slide-nav-btn" id="slide-prev" onclick="slideMove(-1)">&#8592;</button>
-    <div class="slide-dots" id="slide-dots"></div>
-    <button class="slide-nav-btn" id="slide-next" onclick="slideMove(1)">&#8594;</button>
+  <div class="slide-main-row">
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0;min-height:0">
+      <div class="slide-area" id="slide-area"></div>
+      <div class="slide-nav">
+        <button class="slide-nav-btn" id="slide-prev" onclick="slideMove(-1)">&#8592;</button>
+        <div class="slide-dots" id="slide-dots"></div>
+        <button class="slide-nav-btn" id="slide-next" onclick="slideMove(1)">&#8594;</button>
+      </div>
+    </div>
+    <div id="textbook-panel">
+      <div class="tb-header">📖 교재 이미지</div>
+      <div class="tb-imgs" id="tb-imgs-list"></div>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1776,9 +1805,83 @@ function addImgPreview(actId, url) {
   div.appendChild(delBtn);
   grid.appendChild(div);
 }
+// ── 교재 이미지 (에디터용) ──
+async function addTextbookImages(input) {
+  const files = Array.from(input.files);
+  input.value = '';
+  for (const file of files) {
+    await addTextbookImage(file);
+  }
+}
+
+async function addTextbookImage(file) {
+  const grid = document.getElementById('ed-textbook-imgs');
+  const placeholder = document.createElement('div');
+  placeholder.className = 'img-thumb';
+  placeholder.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gray-500);background:#f3f4f6;flex-direction:column;gap:4px';
+  placeholder.innerHTML = '<div style="font-size:18px">⬆️</div><div>업로드 중...</div>';
+  if (grid) grid.appendChild(placeholder);
+
+  try {
+    const dataUrl = await new Promise(res => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result);
+      reader.readAsDataURL(file);
+    });
+    const compressed = await compressImage(dataUrl);
+    const res = await fetch(compressed);
+    const blob = await res.blob();
+
+    const fileName = `tb_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+    const { data, error } = await _sb.storage
+      .from('lesson-images')
+      .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
+    if (error) throw error;
+
+    const { data: urlData } = _sb.storage.from('lesson-images').getPublicUrl(fileName);
+    const publicUrl = urlData.publicUrl;
+
+    if (grid && grid.contains(placeholder)) grid.removeChild(placeholder);
+    addTextbookImgPreview(publicUrl);
+    showToast('✅ 교재 이미지 업로드 완료');
+  } catch(e) {
+    console.error('교재 이미지 업로드 실패:', e);
+    if (grid && grid.contains(placeholder)) grid.removeChild(placeholder);
+    showToast('❌ 이미지 업로드 실패. Storage 버킷을 확인해주세요.');
+  }
+}
+
+function addTextbookImgPreview(url) {
+  const grid = document.getElementById('ed-textbook-imgs');
+  if (!grid) return;
+  const div = document.createElement('div');
+  div.className = 'img-thumb';
+  div.dataset.src = url;
+  const img = document.createElement('img');
+  img.src = url;
+  img.title = '클릭하여 크게 보기';
+  img.onclick = () => openLightbox(url);
+  const delBtn = document.createElement('button');
+  delBtn.className = 'img-thumb-del';
+  delBtn.title = '삭제';
+  delBtn.textContent = '×';
+  delBtn.onclick = async () => {
+    div.remove();
+    try {
+      const fileName = url.split('/').pop().split('?')[0];
+      await _sb.storage.from('lesson-images').remove([fileName]);
+    } catch(e) { console.warn('Storage 이미지 삭제 실패:', e); }
+  };
+  div.appendChild(img);
+  div.appendChild(delBtn);
+  grid.appendChild(div);
+}
+
 // ── 슬라이드쇼 ──
 let _slides = [];
 let _slideIdx = 0;
+let _textbookImages = [];
+let _textbookPanelOpen = false;
 
 function startSlideshow(lessonId) {
   const l = getAllLessons().find(x => x.id === lessonId);
@@ -1798,6 +1901,31 @@ function startSlideshow(lessonId) {
     _slides.push({ type: 'activity', act: a, num: i + 1, total: acts.length });
   });
 
+  // 교재 이미지 세팅
+  _textbookImages = l.textbook_images || [];
+  _textbookPanelOpen = false;
+  const bookBtn = document.getElementById('slide-book-btn');
+  const panel = document.getElementById('textbook-panel');
+  bookBtn.style.display = _textbookImages.length > 0 ? '' : 'none';
+  bookBtn.classList.remove('active');
+  panel.classList.remove('open');
+  // 교재 이미지 패널 내용 채우기
+  const tbList = document.getElementById('tb-imgs-list');
+  tbList.innerHTML = '';
+  if (_textbookImages.length === 0) {
+    tbList.innerHTML = '<div class="tb-empty">등록된 교재 이미지가 없습니다</div>';
+  } else {
+    _textbookImages.forEach(src => {
+      const wrap = document.createElement('div');
+      wrap.className = 'tb-img-wrap';
+      const img = document.createElement('img');
+      img.src = src;
+      img.onclick = () => openLightbox(src);
+      wrap.appendChild(img);
+      tbList.appendChild(wrap);
+    });
+  }
+
   document.getElementById('slide-lesson-title').textContent = l.title;
   _slideIdx = 0;
   renderSlide();
@@ -1809,8 +1937,24 @@ function startSlideshow(lessonId) {
   if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
 }
 
+function toggleTextbookPanel() {
+  _textbookPanelOpen = !_textbookPanelOpen;
+  const panel = document.getElementById('textbook-panel');
+  const btn = document.getElementById('slide-book-btn');
+  if (_textbookPanelOpen) {
+    panel.classList.add('open');
+    btn.classList.add('active');
+  } else {
+    panel.classList.remove('open');
+    btn.classList.remove('active');
+  }
+}
+
 function closeSlideshow() {
   document.getElementById('slideshow-overlay').classList.remove('open');
+  document.getElementById('textbook-panel').classList.remove('open');
+  document.getElementById('slide-book-btn').classList.remove('active');
+  _textbookPanelOpen = false;
   document.body.style.overflow = '';
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
@@ -1979,6 +2123,7 @@ async function saveLesson() {
     curriculum: document.getElementById('ed-curriculum').value.trim(),
     cms_link: document.getElementById('ed-cms').value.trim(),
     notes: document.getElementById('ed-notes').value.trim(),
+    textbook_images: Array.from(document.querySelectorAll('#ed-textbook-imgs .img-thumb')).map(t => t.dataset.src).filter(Boolean),
     links: Array.from(document.querySelectorAll('#ed-links .link-row')).map(row => ({
       label: row.querySelector('.link-label').value.trim(),
       url: row.querySelector('.link-url').value.trim()
@@ -2011,6 +2156,7 @@ function resetEditor() {
   document.getElementById('ed-curriculum').value = '';
   document.getElementById('ed-cms').value = '';
   document.getElementById('ed-notes').value = '';
+  document.getElementById('ed-textbook-imgs').innerHTML = '';
   document.getElementById('ed-links').innerHTML = '';
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
@@ -2037,6 +2183,8 @@ function loadLessonToEditor(id, isCustom) {
   document.getElementById('ed-curriculum').value = l.curriculum || '';
   document.getElementById('ed-cms').value = l.cms_link || '';
   document.getElementById('ed-notes').value = l.notes || '';
+  document.getElementById('ed-textbook-imgs').innerHTML = '';
+  (l.textbook_images || []).forEach(url => addTextbookImgPreview(url));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
   (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
@@ -2064,11 +2212,13 @@ function editCustomLesson(id) {
   document.getElementById('ed-notes').value = l.notes || '';
   document.getElementById('ed-links').innerHTML = '';
   (l.links || []).forEach(lk => addLinkRow(lk.label, lk.url));
+  document.getElementById('ed-textbook-imgs').innerHTML = '';
+  (l.textbook_images || []).forEach(url => addTextbookImgPreview(url));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
   (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
-  
+
   window.scrollTo(0, 0);
 }
 
