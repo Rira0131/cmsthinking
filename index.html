@@ -995,7 +995,8 @@ function showToast(msg) {
 // Dashboard
 function renderDashboard() {
   const allLessons = getAllLessons();
-  const customCount = getCustomLessons().length;
+  // 현재 로그인한 유저가 작성한 교안만 카운트 (author_email 비교, 구버전은 이름 매핑)
+  const customCount = getCustomLessons().filter(isMyLesson).length;
   const levels = [...new Set(allLessons.map(l => l.level))];
   
   // Find current month
