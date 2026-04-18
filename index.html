@@ -1679,8 +1679,8 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
   div.id = 'act-' + id;
   div.innerHTML = `
     <div class="activity-editor-header">
-      <span style="font-weight:600;font-size:13px">활동 ${id}</span>
-      <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();if(_activeActId==='${id}')_activeActId=null;updateTimeBar()">삭제</button>
+      <span class="activity-num" style="font-weight:600;font-size:13px">활동 ${id}</span>
+      <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();if(_activeActId==='${id}')_activeActId=null;renumberActivities();updateTimeBar()">삭제</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">활동명</label><input type="text" class="form-input act-name" value="${escHtml(name)}"></div>
@@ -1710,7 +1710,16 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
   if (images && images.length > 0) {
     images.forEach(src => addImgPreview(id, src));
   }
+  renumberActivities();
   updateTimeBar();
+}
+
+// 활동 편집기들의 화면 표시 번호를 현재 순서대로 1부터 다시 매긴다
+// (내부 DOM id는 유지해서 이미지 업로드 등 기존 참조는 영향 없음)
+function renumberActivities() {
+  document.querySelectorAll('.activity-editor .activity-num').forEach((span, idx) => {
+    span.textContent = '활동 ' + (idx + 1);
+  });
 }
 
 // ── 90분 시간 합산 체크 ──
