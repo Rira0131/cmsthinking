@@ -601,16 +601,18 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
               <span>활동 목록</span>
               <span id="time-summary" style="font-size:12px;font-weight:500"></span>
             </label>
-            <div id="time-warning" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:13px;font-weight:600">
-              ⚠️ 총 활동 시간이 <span id="time-over-val"></span>분으로 90분을 초과했습니다! 활동 시간을 조정해 주세요.
-            </div>
-            <div id="time-bar-wrap" style="margin-bottom:12px;display:none">
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-500);margin-bottom:4px">
-                <span>0분</span><span id="time-bar-label">0 / 90분</span><span>90분</span>
+            <div id="time-sticky-wrap" style="position:sticky;top:8px;z-index:50">
+              <div id="time-warning" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:13px;font-weight:600">
+                ⚠️ 총 활동 시간이 <span id="time-over-val"></span>분으로 90분을 초과했습니다! 활동 시간을 조정해 주세요.
               </div>
-              <div style="background:var(--gray-200);border-radius:6px;height:8px;position:relative">
-                <div id="time-bar-fill" style="height:100%;border-radius:6px;transition:width .3s,background .3s;background:var(--primary)"></div>
-                <div style="position:absolute;top:-2px;left:calc(100% - 2px);width:2px;height:12px;background:#374151;border-radius:1px"></div>
+              <div id="time-bar-wrap" style="margin-bottom:12px;display:none;padding:10px 14px;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid var(--gray-200)">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-500);margin-bottom:4px">
+                  <span>0분</span><span id="time-bar-label">0 / 90분</span><span>90분</span>
+                </div>
+                <div style="background:var(--gray-200);border-radius:6px;height:8px;position:relative">
+                  <div id="time-bar-fill" style="height:100%;border-radius:6px;transition:width .3s,background .3s;background:var(--primary)"></div>
+                  <div style="position:absolute;top:-2px;left:calc(100% - 2px);width:2px;height:12px;background:#374151;border-radius:1px"></div>
+                </div>
               </div>
             </div>
             <div id="ed-activities"></div>
