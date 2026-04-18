@@ -876,6 +876,14 @@ function getCurrentEmail() { return sessionStorage.getItem('cms_email') || ''; }
 function getCurrentCenter() { return sessionStorage.getItem('cms_center') || ''; }
 function getCurrentScheduleId() { return parseInt(sessionStorage.getItem('cms_schedule_id') || '1'); }
 
+// ── 관리자 설정 ──
+// 관리자는 모든 교안을 삭제할 수 있음 (작성자 무관)
+const ADMIN_EMAILS = ['rira@mjcms.com'];
+function isAdmin() {
+  const email = (getCurrentEmail() || '').toLowerCase();
+  return ADMIN_EMAILS.includes(email);
+}
+
 // 센터 필터 (true=내 센터만, false=전체) — 교안은 전 센터 공유가 기본
 let _centerFilter = false;
 
@@ -1528,7 +1536,7 @@ function filterLessons() {
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
             <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${isMyLesson(l) ? '✏️ 편집' : '📋 복사'}</button>
-            ${isMyLesson(l) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})">🗑️ 삭제</button>` : ''}
+            ${(isMyLesson(l) || isAdmin()) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})" title="${isMyLesson(l) ? '삭제' : '관리자 권한으로 삭제'}">🗑️ 삭제${(!isMyLesson(l) && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
             <span class="chevron">▼</span>
           </div>
         </div>
@@ -2586,8 +2594,12 @@ function deleteAnyLesson(id, isCustom) {
 }
 async function deleteCustomLesson(id) {
   const l = _state.customLessons.find(c => c.id === id);
-  if (l && !isMyLesson(l)) { showToast('⛔ 다른 선생님의 교안은 삭제할 수 없습니다'); return; }
-  if (!confirm('정말 삭제하시겠습니까?')) return;
+  // 관리자는 모든 교안 삭제 가능, 일반 유저는 본인 것만
+  if (l && !isMyLesson(l) && !isAdmin()) { showToast('⛔ 다른 선생님의 교안은 삭제할 수 없습니다'); return; }
+  const msg = (l && !isMyLesson(l) && isAdmin())
+    ? `[관리자] "${l.author || '다른 선생님'}"이 작성한 "${l.title}" 교안을 삭제하시겠습니까?`
+    : '정말 삭제하시겠습니까?';
+  if (!confirm(msg)) return;
   _state.customLessons = _state.customLessons.filter(c => c.id !== id);
   window._justSaved = Date.now();
   await _sb.from('custom_lessons').delete().eq('id', id);
@@ -2624,7 +2636,7 @@ function renderMyLessons() {
       </div>
       <div class="my-lesson-actions">
         <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
-        ${mine ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>` : ''}
+        ${(mine || isAdmin()) ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${(!mine && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
       </div>
     </div>`;
   });
@@ -2648,7 +2660,7 @@ function showAllLessons() {
       </div>
       <div class="my-lesson-actions">
         <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
-        ${mine ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')">삭제</button>` : ''}
+        ${(mine || isAdmin()) ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${(!mine && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
       </div>
     </div>`;
   });
@@ -2794,11 +2806,17 @@ async function toggleCenterFilter() {
 
 // Init
 function init() {
-  // 내 이름 표시
+  // 내 이름 표시 (관리자는 뱃지 추가)
   const myName = sessionStorage.getItem('cms_name');
   if (myName) {
     const tag = document.getElementById('my-name-tag');
-    if (tag) tag.textContent = '👤 ' + myName;
+    if (tag) {
+      if (isAdmin()) {
+        tag.innerHTML = '👤 ' + myName + ' <span style="background:#DC2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">관리자</span>';
+      } else {
+        tag.textContent = '👤 ' + myName;
+      }
+    }
   }
   // 센터명 표시
   const myCenter = getCurrentCenter();
