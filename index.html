@@ -227,6 +227,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 /* ── 이미지 업로드 ── */
 .img-upload-zone{border:2px dashed var(--gray-300);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafe;font-size:13px;color:var(--gray-500);margin-top:4px}
 .img-upload-zone:hover,.img-upload-zone.dragover{border-color:var(--primary);background:var(--primary-bg);color:var(--primary)}
+.img-upload-zone.active-target{border-style:solid;border-color:var(--primary);background:var(--primary-bg);color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
 .img-upload-zone.paste-flash{border-color:var(--green);background:var(--green-bg);color:var(--green)}
 .img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .img-thumb{position:relative;width:96px;height:96px;border-radius:8px;overflow:hidden;border:1px solid var(--gray-200);background:#f3f4f6;flex-shrink:0}
@@ -1677,7 +1678,7 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
   div.innerHTML = `
     <div class="activity-editor-header">
       <span style="font-weight:600;font-size:13px">활동 ${id}</span>
-      <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();updateTimeBar()">삭제</button>
+      <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();if(_activeActId==='${id}')_activeActId=null;updateTimeBar()">삭제</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">활동명</label><input type="text" class="form-input act-name" value="${escHtml(name)}"></div>
@@ -1691,11 +1692,12 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
     <div class="form-group">
       <label class="form-label">🖼️ 이미지 <span style="font-weight:400;font-size:11px;color:var(--gray-500)">(클릭·드래그·Ctrl+V 붙여넣기)</span></label>
       <div class="img-upload-zone" id="img-zone-${id}"
+           onclick="onImgZoneClick(event,'${id}')"
            ondragover="event.preventDefault();this.classList.add('dragover')"
            ondragleave="this.classList.remove('dragover')"
            ondrop="handleImgDrop(event,'${id}')">
         📷 이미지 파일 선택 또는 드래그 &nbsp;·&nbsp; <kbd style="background:#e5e7eb;padding:1px 6px;border-radius:4px;font-size:12px">Ctrl+V</kbd>로 붙여넣기
-        <label style="display:inline-block;margin-top:6px;padding:4px 14px;background:var(--primary);color:#fff;border-radius:6px;font-size:12px;cursor:pointer">
+        <label style="display:inline-block;margin-top:6px;padding:4px 14px;background:var(--primary);color:#fff;border-radius:6px;font-size:12px;cursor:pointer" onclick="event.stopPropagation();setActiveImgZone('${id}')">
           파일 선택<input type="file" id="img-file-${id}" accept="image/*" multiple style="display:none" onchange="handleImgFiles(this,'${id}')">
         </label>
       </div>
@@ -1764,6 +1766,22 @@ function updateTimeBar() {
 
 
 // ── 이미지 처리 ──
+// 현재 활성 이미지 영역 (Ctrl+V 붙여넣기 대상)
+let _activeActId = null;
+function setActiveImgZone(actId) {
+  _activeActId = actId;
+  document.querySelectorAll('.img-upload-zone').forEach(z => z.classList.remove('active-target'));
+  const zone = document.getElementById('img-zone-' + actId);
+  if (zone) zone.classList.add('active-target');
+}
+function onImgZoneClick(e, actId) {
+  // 영역 클릭 시 해당 활동을 활성 대상으로 설정
+  setActiveImgZone(actId);
+  // 내부의 "파일 선택" 라벨/입력 클릭이 아니면 파일 선택창 열기
+  const t = e.target;
+  if (t.tagName === 'LABEL' || t.tagName === 'INPUT' || t.closest('label')) return;
+  document.getElementById('img-file-' + actId)?.click();
+}
 function handleImgFiles(input, actId) {
   Array.from(input.files).forEach(file => addImgToActivity(actId, file));
   input.value = '';
@@ -1771,6 +1789,7 @@ function handleImgFiles(input, actId) {
 function handleImgDrop(e, actId) {
   e.preventDefault();
   document.getElementById('img-zone-'+actId)?.classList.remove('dragover');
+  setActiveImgZone(actId);
   Array.from(e.dataTransfer.files)
     .filter(f => f.type.startsWith('image/'))
     .forEach(f => addImgToActivity(actId, f));
@@ -2314,8 +2333,11 @@ document.addEventListener('paste', function(e) {
   const editors = document.querySelectorAll('.activity-editor');
   if (editors.length === 0) return;
 
-  // 현재 포커스된 활동 편집기 or 마지막 편집기
+  // 우선순위: ① 현재 포커스된 편집기 → ② 최근 클릭된 이미지 영역 → ③ 마지막 편집기
   let actEditor = document.activeElement?.closest?.('.activity-editor');
+  if (!actEditor && _activeActId) {
+    actEditor = document.getElementById('act-' + _activeActId);
+  }
   if (!actEditor) actEditor = editors[editors.length - 1];
 
   const actId = actEditor.id.replace('act-', '');
