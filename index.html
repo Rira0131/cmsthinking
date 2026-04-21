@@ -1958,13 +1958,14 @@ async function uploadAttachment(file) {
   container.appendChild(placeholder);
 
   try {
-    const fileName = `attach_${Date.now()}_${Math.random().toString(36).slice(2)}_${file.name}`;
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : '';
+    const safeFileName = `attach_${Date.now()}_${Math.random().toString(36).slice(2)}${ext ? '.' + ext : ''}`;
     const { data, error } = await _sb.storage
       .from('lesson-images')
-      .upload(fileName, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+      .upload(safeFileName, file, { contentType: file.type || 'application/octet-stream', upsert: false });
     if (error) throw error;
 
-    const { data: urlData } = _sb.storage.from('lesson-images').getPublicUrl(fileName);
+    const { data: urlData } = _sb.storage.from('lesson-images').getPublicUrl(safeFileName);
     container.removeChild(placeholder);
     addAttachmentRow(file.name, urlData.publicUrl, file.size);
     showToast(`✅ ${file.name} 업로드 완료`);
