@@ -2500,6 +2500,8 @@ function loadLessonToEditor(id, isCustom) {
   document.getElementById('ed-curriculum').value = l.curriculum || '';
   document.getElementById('ed-cms').value = l.cms_link || '';
   document.getElementById('ed-notes').value = l.notes || '';
+  document.getElementById('ed-links').innerHTML = '';
+  (l.links || []).forEach(lk => addLinkRow(lk.label, lk.url));
   document.getElementById('ed-textbook-imgs').innerHTML = '';
   (l.textbook_images || []).forEach(url => addTextbookImgPreview(url));
   document.getElementById('ed-attachments').innerHTML = '';
