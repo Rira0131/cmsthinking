@@ -755,6 +755,7 @@ async function _sbLoad() {
     if (statusRes.data) statusRes.data.forEach(r => {
       _state.weekStatus[r.id] = {t1: r.t1_done, t2: r.t2_done};
     });
+    await loadCmsConfig();
     bar.style.width = '100%';
   } catch(e) {
     console.error('Supabase 로드 오류:', e);
