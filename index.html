@@ -2578,8 +2578,7 @@ function editCustomLesson(id) {
 }
 
 function deleteAnyLesson(id, isCustom) {
-  if (!confirm('이 자료를 삭제하시겠습니까?
-(내장 자료는 이 기기에서만 숨겨집니다)')) return;
+  if (!confirm('이 자료를 삭제하시겠습니까?\n(내장 자료는 이 기기에서만 숨겨집니다)')) return;
   if (isCustom) {
     deleteCustomLesson(id);
   } else {
