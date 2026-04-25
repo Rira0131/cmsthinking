@@ -877,12 +877,13 @@ function getCurrentCenter() { return sessionStorage.getItem('cms_center') || '';
 function getCurrentScheduleId() { return parseInt(sessionStorage.getItem('cms_schedule_id') || '1'); }
 
 // ── 관리자 설정 ──
-// 관리자는 모든 교안을 삭제할 수 있음 (작성자 무관)
+// 관리자는 모든 교안을 편집/삭제할 수 있음 (작성자 무관)
 const ADMIN_EMAILS = ['rira@mjcms.com'];
 function isAdmin() {
   const email = (getCurrentEmail() || '').toLowerCase();
   return ADMIN_EMAILS.includes(email);
 }
+function canEdit(l) { return isMyLesson(l) || isAdmin(); }
 
 // 센터 필터 (true=내 센터만, false=전체) — 교안은 전 센터 공유가 기본
 let _centerFilter = false;
@@ -1535,7 +1536,7 @@ function filterLessons() {
             ${l.author ? `<span class="badge badge-author">${l.author}</span>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
-            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${isMyLesson(l) ? '✏️ 편집' : '📋 복사'}</button>
+            <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${canEdit(l) ? '✏️ 편집' : '📋 복사'}</button>
             ${(isMyLesson(l) || isAdmin()) ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})" title="${isMyLesson(l) ? '삭제' : '관리자 권한으로 삭제'}">🗑️ 삭제${(!isMyLesson(l) && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
             <span class="chevron">▼</span>
           </div>
@@ -2491,7 +2492,7 @@ function loadLessonToEditor(id, isCustom) {
 
   // 내장 자료: id 비워서 새 custom 자료로 생성
   // custom 자료: 내 교안이면 id 유지(덮어쓰기), 남의 교안이면 id 비워서 복사
-  const isMineLoad = isCustom ? isMyLesson(l) : false;
+  const isMineLoad = isCustom ? canEdit(l) : false;
   document.getElementById('ed-id').value = isMineLoad ? l.id : '';
   document.getElementById('ed-title').value = l.title || '';
   document.getElementById('ed-author').value = l.author || '';
@@ -2547,9 +2548,9 @@ function editCustomLesson(id) {
   const l = customs.find(c => c.id === id);
   if (!l) return;
 
-  const isMine = isMyLesson(l);
+  const isMine = canEdit(l);
   showEditorTab('write');
-  // 내 교안이 아니면 ID 비워서 새 교안으로 저장되게 함
+  // 내 교안이 아니고 관리자도 아니면 ID 비워서 새 교안으로 저장되게 함
   document.getElementById('ed-id').value = isMine ? l.id : '';
   document.getElementById('ed-title').value = l.title;
   document.getElementById('ed-author').value = l.author;
