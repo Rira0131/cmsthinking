@@ -987,7 +987,7 @@ function getAllLessons() {
   const deleted = _state.deletedBuiltinIds;
   const builtins = DATA.lessons.map((l, i) => ({...l, id: l.id || 'builtin_' + i, builtin: true}))
     .filter(l => !deleted.includes(l.id));
-  return [...builtins, ..._state.customLessons];
+  return [...builtins, ..._state.customLessons.map(l => ({...l, custom: true}))];
 }
 function getCustomLessons() {
   return _state.customLessons;
