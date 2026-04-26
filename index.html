@@ -111,6 +111,48 @@ a{color:var(--primary);text-decoration:none}
 .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:#FF6B9D;box-shadow:0 0 0 3px rgba(255,107,157,.12)}
 .form-textarea{min-height:80px;resize:vertical}
 .form-textarea.act-research{min-height:180px}
+
+/* Activity research rich editor */
+.research-toolbar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+  padding:6px 8px;background:var(--gray-50);
+  border:1px solid var(--gray-300);border-bottom:none;
+  border-radius:8px 8px 0 0;
+}
+.research-toolbar + .research-editor{border-top-left-radius:0;border-top-right-radius:0;border-top:none}
+.research-editor{
+  width:100%;min-height:180px;padding:10px 14px;
+  border:1px solid var(--gray-300);border-radius:8px;
+  font-size:14px;font-family:inherit;outline:none;
+  transition:border .15s,box-shadow .15s;line-height:1.7;
+  word-break:break-word;background:#fff;overflow:auto;
+}
+.research-editor:focus{border-color:#FF6B9D;box-shadow:0 0 0 3px rgba(255,107,157,.12)}
+.research-editor.is-empty::before{
+  content:attr(data-placeholder);
+  color:var(--gray-300);pointer-events:none;display:block;
+}
+.rt-btn{
+  border:1px solid transparent;background:transparent;border-radius:4px;
+  padding:3px 8px;font-size:13px;cursor:pointer;color:var(--gray-700);
+  font-family:inherit;line-height:1.4;
+}
+.rt-btn:hover{background:#fff;border-color:var(--gray-200)}
+.rt-btn b{font-weight:800}
+.rt-color,.rt-hl{
+  width:18px;height:18px;border:1px solid rgba(0,0,0,.15);border-radius:50%;
+  cursor:pointer;padding:0;transition:transform .1s;
+}
+.rt-color:hover,.rt-hl:hover{transform:scale(1.2)}
+.rt-clear{
+  background:#fff;border:1px dashed var(--gray-300);
+  height:22px;padding:0 6px;border-radius:4px;
+  font-size:11px;color:var(--gray-500);cursor:pointer;font-family:inherit;
+}
+.rt-clear:hover{background:var(--gray-50);color:var(--gray-700)}
+.rt-sep{width:1px;height:18px;background:var(--gray-200);margin:0 4px}
+.rt-label{font-size:11px;color:var(--gray-500);margin:0 2px}
+
 .btn{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
 .btn-primary{background:linear-gradient(135deg,#FF6B9D,#FF8E6E);color:#fff;box-shadow:0 4px 12px rgba(255,107,157,.3)}
 .btn-primary:hover{background:linear-gradient(135deg,#FF5A8F,#FF7D5C);transform:translateY(-1px)}
@@ -750,13 +792,16 @@ async function _sbLoad() {
     if (lessonsRes.data) {
       _state.customLessons = lessonsRes.data.map(r => ({...r.data, id: r.id}));
       _lessonOffset = lessonsRes.data.length;
-      _lessonHasMore = lessonsRes.count > _lessonOffset;
+      _lessonHasMore = (lessonsRes.count || 0) > _lessonOffset;
+      _lessonTotalCount = lessonsRes.count || _lessonOffset;
     }
     if (statusRes.data) statusRes.data.forEach(r => {
       _state.weekStatus[r.id] = {t1: r.t1_done, t2: r.t2_done};
     });
     await loadCmsConfig();
     bar.style.width = '100%';
+    // 첫 화면 보여준 뒤 백그라운드에서 나머지 교안 모두 로드
+    setTimeout(() => { backgroundLoadAllLessons().catch(e => console.warn('bg load:', e)); }, 300);
   } catch(e) {
     console.error('Supabase 로드 오류:', e);
     bar.style.width = '100%';
@@ -764,6 +809,66 @@ async function _sbLoad() {
     if (loadMsg) loadMsg.textContent = '⚠️ 서버 연결 실패 — 오프라인 모드로 실행합니다';
     await new Promise(r => setTimeout(r, 1500));
   }
+}
+
+// ── 백그라운드 전체 교안 로드 (시작 직후 비동기로 나머지를 채움) ──
+let _lessonTotalCount = 0;
+let _bgLoading = false;
+async function backgroundLoadAllLessons() {
+  if (_bgLoading) return;
+  if (!_lessonHasMore) return;
+  _bgLoading = true;
+  const indicator = ensureBgLoadIndicator();
+  try {
+    const PAGE = 200;
+    while (_lessonHasMore) {
+      const myCenter = getCurrentCenter();
+      let q = _sb.from('custom_lessons').select('id,data', { count: 'exact' })
+        .order('updated_at', { ascending: false });
+      if (_centerFilter && myCenter) {
+        q = q.or(`data->>center.eq.${myCenter},data->>center.is.null`);
+      }
+      const { data, count, error } = await q.range(_lessonOffset, _lessonOffset + PAGE - 1);
+      if (error) { console.error('bg load error:', error); break; }
+      const batch = (data || []).map(r => ({...r.data, id: r.id}));
+      if (!batch.length) { _lessonHasMore = false; break; }
+      _state.customLessons.push(...batch);
+      _lessonOffset += batch.length;
+      _lessonTotalCount = count || _lessonOffset;
+      _lessonHasMore = _lessonOffset < _lessonTotalCount;
+      // 라이브러리 페이지가 활성화되어 있으면 부드럽게 갱신
+      if (document.getElementById('page-library')?.classList.contains('active')) {
+        if (typeof filterLessons === 'function') filterLessons();
+      }
+      if (indicator) {
+        indicator.textContent = `📥 추가 교안 불러오는 중... (${_lessonOffset}/${_lessonTotalCount})`;
+      }
+      // 다음 페이지 전에 잠깐 양보 (UI 반응성 유지)
+      await new Promise(r => setTimeout(r, 30));
+    }
+    // 완료
+    if (indicator) {
+      indicator.textContent = `✅ 전체 교안 ${_lessonOffset}개 로드 완료`;
+      setTimeout(() => indicator.remove(), 1500);
+    }
+    if (typeof filterLessons === 'function' &&
+        document.getElementById('page-library')?.classList.contains('active')) {
+      filterLessons();
+    }
+  } finally {
+    _bgLoading = false;
+  }
+}
+
+function ensureBgLoadIndicator() {
+  let el = document.getElementById('bg-load-indicator');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'bg-load-indicator';
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:rgba(79,70,229,0.92);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;z-index:9000;box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:none';
+  el.textContent = '📥 추가 교안 불러오는 중...';
+  document.body.appendChild(el);
+  return el;
 }
 
 // ── Realtime 구독 ──
@@ -1516,7 +1621,7 @@ function filterLessons() {
     if (author && normalizeName(l.author) !== author) return false;
     if (query) {
       const searchText = [l.title, l.objectives, l.teacher_objectives, l.notes,
-        ...l.activities.map(a => a.name + ' ' + a.research)
+        ...l.activities.map(a => a.name + ' ' + researchToPlainText(a.research))
       ].join(' ').toLowerCase();
       if (!searchText.includes(query)) return false;
     }
@@ -1571,7 +1676,7 @@ function filterLessons() {
                     ${a.time ? `<span class="activity-time">${a.time}</span>` : ''}
                   </div>
                   ${a.workbook ? `<div class="activity-workbook">📖 워크북 연계: ${highlightText(a.workbook, query)}</div>` : ''}
-                  ${a.research ? `<div class="activity-research">${highlightText(a.research, query)}</div>` : ''}
+                  ${a.research ? `<div class="activity-research">${researchToDisplayHtml(a.research, query)}</div>` : ''}
                   ${a.materials ? `<div class="activity-materials">🧩 준비물: ${a.materials}</div>` : ''}
                   ${a.images && a.images.length > 0 ? '<div class="view-img-grid">' + a.images.map(src => '<div class="view-img-thumb"><img src="' + src + '" onclick="openLightbox(this.src)" title="클릭"></div>').join('') + '</div>' : ''}
                 </div>
@@ -1692,6 +1797,149 @@ async function deleteComment(commentId, lessonId) {
 }
 
 // Editor
+
+// ── 활동 연구 서식(rich text) 헬퍼 ──
+// 허용 태그: 굵게/기울임/밑줄/줄바꿈/색상·형광펜용 span
+const _RESEARCH_ALLOWED_TAGS = new Set(['B','STRONG','I','EM','U','BR','SPAN','DIV','P','MARK','FONT']);
+const _RESEARCH_ALLOWED_STYLES = ['color','background-color','background','font-weight','font-style','text-decoration'];
+
+function isResearchHtml(s) {
+  if (!s) return false;
+  return /<(b|i|u|strong|em|span|br|p|div|mark|font)[\s>\/]/i.test(s);
+}
+
+function sanitizeResearchHtml(html) {
+  if (!html) return '';
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const filterStyle = (val) => {
+    return (val || '').split(';').map(s => s.trim()).filter(s => {
+      if (!s) return false;
+      const prop = s.split(':')[0].trim().toLowerCase();
+      return _RESEARCH_ALLOWED_STYLES.includes(prop);
+    }).join('; ');
+  };
+  const walk = (node) => {
+    const children = Array.from(node.childNodes);
+    for (const child of children) {
+      if (child.nodeType === Node.TEXT_NODE) continue;
+      if (child.nodeType !== Node.ELEMENT_NODE) { child.remove(); continue; }
+      if (!_RESEARCH_ALLOWED_TAGS.has(child.tagName)) {
+        const frag = document.createDocumentFragment();
+        while (child.firstChild) frag.appendChild(child.firstChild);
+        child.replaceWith(frag);
+        walk(node);
+        return;
+      }
+      for (const attr of Array.from(child.attributes)) {
+        if (attr.name.toLowerCase() === 'style') {
+          const safe = filterStyle(attr.value);
+          if (safe) child.setAttribute('style', safe);
+          else child.removeAttribute('style');
+        } else if (attr.name.toLowerCase() === 'color' && child.tagName === 'FONT') {
+          // 호환: <font color="..."> 그대로
+        } else {
+          child.removeAttribute(attr.name);
+        }
+      }
+      walk(child);
+    }
+  };
+  walk(tpl.content);
+  return tpl.innerHTML;
+}
+
+// 화면용 HTML (구버전 평문 호환)
+function researchToDisplayHtml(s, query) {
+  if (!s) return '';
+  if (isResearchHtml(s)) {
+    return sanitizeResearchHtml(s);
+  }
+  let safe = escHtml(s);
+  if (query) {
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    safe = safe.replace(re, '<mark>$1</mark>');
+  }
+  return safe.replace(/\n/g, '<br>');
+}
+
+function researchToPlainText(s) {
+  if (!s) return '';
+  if (!isResearchHtml(s)) return s;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = sanitizeResearchHtml(s);
+  return (tpl.content.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function applyResearchFormat(btn, cmd, value) {
+  const wrap = btn.closest('.activity-editor');
+  if (!wrap) return;
+  const editor = wrap.querySelector('.act-research');
+  if (!editor) return;
+  const sel = window.getSelection();
+  let inside = false;
+  if (sel && sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0);
+    inside = editor.contains(r.commonAncestorContainer);
+  }
+  if (!inside) { editor.focus(); return; }
+  try { document.execCommand('styleWithCSS', false, true); } catch(_) {}
+  if (cmd === 'removeFormat') {
+    document.execCommand('removeFormat', false, null);
+    document.execCommand('foreColor', false, 'inherit');
+    document.execCommand('hiliteColor', false, 'transparent');
+  } else if (cmd === 'foreColor') {
+    document.execCommand('foreColor', false, value || 'inherit');
+  } else if (cmd === 'hiliteColor') {
+    if (value === '' || value == null) {
+      document.execCommand('hiliteColor', false, 'transparent');
+      document.execCommand('backColor', false, 'transparent');
+    } else {
+      document.execCommand('hiliteColor', false, value);
+    }
+  } else {
+    document.execCommand(cmd, false, value || null);
+  }
+  updateResearchEmpty(editor);
+}
+
+function updateResearchEmpty(editor) {
+  if (!editor) return;
+  const isEmpty = !editor.textContent.trim() && !editor.querySelector('img');
+  editor.classList.toggle('is-empty', isEmpty);
+}
+
+function buildResearchToolbarHtml() {
+  const colors = [
+    ['#DC2626', '빨강'], ['#2563EB', '파랑'], ['#059669', '초록'],
+    ['#D97706', '주황'], ['#7C3AED', '보라'], ['#111827', '검정']
+  ];
+  const highlights = [
+    ['#FEF3C7', '노랑'], ['#FECACA', '분홍'],
+    ['#BFDBFE', '파랑'], ['#BBF7D0', '초록']
+  ];
+  const colorBtns = colors.map(([c, t]) =>
+    `<button type="button" class="rt-color" style="background:${c}" title="${t}" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'foreColor','${c}')"></button>`
+  ).join('');
+  const hlBtns = highlights.map(([c, t]) =>
+    `<button type="button" class="rt-hl" style="background:${c}" title="형광펜 ${t}" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'hiliteColor','${c}')"></button>`
+  ).join('');
+  return `
+    <div class="research-toolbar">
+      <button type="button" class="rt-btn" title="굵게 (Ctrl+B)" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'bold')"><b>B</b></button>
+      <span class="rt-sep"></span>
+      <span class="rt-label">색상</span>
+      ${colorBtns}
+      <button type="button" class="rt-clear" title="글자색 기본으로" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'foreColor','')">기본</button>
+      <span class="rt-sep"></span>
+      <span class="rt-label">형광펜</span>
+      ${hlBtns}
+      <button type="button" class="rt-clear" title="형광펜 제거" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'hiliteColor','')">없음</button>
+      <span class="rt-sep"></span>
+      <button type="button" class="rt-clear" title="모든 서식 제거" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'removeFormat')">서식 지우기</button>
+    </div>`;
+}
+
 let activityCount = 0;
 function addActivityEditor(name='', research='', materials='', time='', workbook='', images=[]) {
   activityCount++;
@@ -1709,7 +1957,11 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
       <div class="form-group"><label class="form-label">활동명</label><input type="text" class="form-input act-name" value="${escHtml(name)}"></div>
       <div class="form-group"><label class="form-label">워크북 연계 <span style="font-weight:400;color:var(--gray-500)">(예: A형 1번, B형 2-3번)</span></label><input type="text" class="form-input act-workbook" value="${escHtml(workbook)}" placeholder="예: A형 1번"></div>
     </div>
-    <div class="form-group"><label class="form-label">활동 연구</label><textarea class="form-textarea act-research">${escHtml(research)}</textarea></div>
+    <div class="form-group">
+      <label class="form-label">활동 연구</label>
+      ${buildResearchToolbarHtml()}
+      <div class="research-editor act-research" contenteditable="true" data-placeholder="활동 연구 내용을 입력하세요. 위 툴바로 굵게·색상·형광펜을 적용할 수 있어요."></div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">준비물</label><input type="text" class="form-input act-materials" value="${escHtml(materials)}"></div>
       <div class="form-group"><label class="form-label">소요 시간</label><input type="text" class="form-input act-time" value="${escHtml(time)}" placeholder="예: 10분" oninput="updateTimeBar()"></div>
@@ -1730,6 +1982,25 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
     </div>
   `;
   container.appendChild(div);
+  // 활동 연구 contenteditable 초기 콘텐츠 주입 (구버전 평문/신버전 HTML 모두 대응)
+  const researchEditor = div.querySelector('.act-research');
+  if (researchEditor) {
+    researchEditor.innerHTML = researchToDisplayHtml(research);
+    updateResearchEmpty(researchEditor);
+    researchEditor.addEventListener('input', () => updateResearchEmpty(researchEditor));
+    researchEditor.addEventListener('blur', () => updateResearchEmpty(researchEditor));
+    researchEditor.addEventListener('paste', (e) => {
+      const html = e.clipboardData && e.clipboardData.getData('text/html');
+      const text = e.clipboardData && e.clipboardData.getData('text/plain');
+      if (html) {
+        e.preventDefault();
+        document.execCommand('insertHTML', false, sanitizeResearchHtml(html));
+      } else if (text) {
+        e.preventDefault();
+        document.execCommand('insertText', false, text);
+      }
+    });
+  }
   if (images && images.length > 0) {
     images.forEach(src => addImgPreview(id, src));
   }
@@ -2310,7 +2581,7 @@ function renderSlide() {
         ${a.time ? `<span class="slide-act-time">⏱ ${a.time}</span>` : ''}
         <div class="slide-act-body">
           <div>
-            ${a.research ? `<div class="slide-act-research">${escHtml(a.research)}</div>` : '<div style="color:#64748b;font-style:italic">연구 내용 없음</div>'}
+            ${a.research ? `<div class="slide-act-research">${researchToDisplayHtml(a.research)}</div>` : '<div style="color:#64748b;font-style:italic">연구 내용 없음</div>'}
             <div class="slide-act-extras">
               ${a.workbook ? `<span class="slide-extra-tag">📖 워크북: ${escHtml(a.workbook)}</span>` : ''}
               ${a.materials ? `<span class="slide-extra-tag">🧩 준비물: ${escHtml(a.materials)}</span>` : ''}
@@ -2422,9 +2693,20 @@ async function saveLesson() {
       const images = imgGrid
         ? Array.from(imgGrid.querySelectorAll('.img-thumb')).map(t => t.dataset.src).filter(Boolean)
         : [];
+      const researchEl = ae.querySelector('.act-research');
+      // contenteditable이면 innerHTML(정화) 사용, 구버전 textarea 호환을 위해 value도 fallback
+      let researchVal = '';
+      if (researchEl) {
+        if (researchEl.isContentEditable || researchEl.getAttribute('contenteditable') === 'true') {
+          const plain = (researchEl.textContent || '').trim();
+          researchVal = plain ? sanitizeResearchHtml(researchEl.innerHTML).trim() : '';
+        } else {
+          researchVal = (researchEl.value || '').trim();
+        }
+      }
       activities.push({
         name,
-        research: ae.querySelector('.act-research').value.trim(),
+        research: researchVal,
         materials: ae.querySelector('.act-materials').value.trim(),
         time: ae.querySelector('.act-time').value.trim(),
         workbook: ae.querySelector('.act-workbook') ? ae.querySelector('.act-workbook').value.trim() : '',
@@ -2807,11 +3089,10 @@ async function toggleCenterFilter() {
     if (label) label.textContent = '전체 센터';
     if (btn) { btn.textContent = '내 센터만 보기'; btn.style.background = '#FF6B9D'; btn.style.color = 'white'; }
   }
-  // DB에서 다시 로드
+  // DB에서 다시 로드 (첫 페이지만 빠르게 + 백그라운드)
   _lessonOffset = 0;
   _lessonHasMore = false;
   _state.customLessons = [];
-  const schedId = getCurrentScheduleId();
   let q = _sb.from('custom_lessons').select('id,data', { count: 'exact' })
     .order('updated_at', { ascending: false });
   if (_centerFilter && myCenter) {
@@ -2821,9 +3102,13 @@ async function toggleCenterFilter() {
   if (data) {
     _state.customLessons = data.map(r => ({...r.data, id: r.id}));
     _lessonOffset = data.length;
-    _lessonHasMore = count > _lessonOffset;
+    _lessonTotalCount = count || _lessonOffset;
+    _lessonHasMore = _lessonOffset < _lessonTotalCount;
   }
+  if (typeof filterLessons === 'function') filterLessons();
   renderMyLessons();
+  // 나머지는 백그라운드에서 조용히 마저 로드
+  setTimeout(() => { backgroundLoadAllLessons().catch(e => console.warn('bg load:', e)); }, 200);
 }
 
 // Init
@@ -2907,7 +3192,7 @@ function printLesson(idx) {
       </div>
       <div class="act-body">
         ${a.workbook ? `<div class="act-workbook">📖 워크북 연계: ${a.workbook}</div>` : ''}
-        ${a.research ? `<div class="act-research">${a.research}</div>` : ''}
+        ${a.research ? `<div class="act-research">${researchToDisplayHtml(a.research)}</div>` : ''}
         ${a.materials ? `<div class="act-materials">🧩 준비물: ${a.materials}</div>` : ''}
         ${a.images && a.images.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${a.images.map(src => `<img src="${src}" style="max-width:200px;max-height:150px;border-radius:4px;border:1px solid #E5E7EB;object-fit:contain">`).join('')}</div>` : ''}
       </div>
