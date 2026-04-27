@@ -211,6 +211,100 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .my-lesson-info p{font-size:12px;color:var(--gray-500);margin-top:2px}
 .my-lesson-actions{display:flex;gap:6px}
 
+/* Dashboard: personal box */
+.personal-box{background:linear-gradient(135deg,#FFF0F5,#FFE8E0);border-radius:14px;padding:16px 20px;margin-bottom:18px;border:1px solid #FFD0E2;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.personal-greeting{font-size:15px;color:var(--gray-700)}
+.personal-greeting strong{color:var(--primary);font-weight:700}
+.personal-task{display:flex;flex-direction:column;gap:2px;text-align:right;min-width:0;flex:1}
+.task-label{font-size:10px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px}
+.task-detail{font-size:13px;color:var(--gray-900);font-weight:600}
+.task-more{font-size:11px;color:var(--primary);margin-top:2px}
+.personal-task.all-done{font-size:13px;color:var(--gray-500);text-align:right}
+
+.personal-hint{margin:-12px 0 18px;padding:10px 14px;background:#FFF8E6;border:1px solid #FFE4A0;border-radius:10px;font-size:12px;color:#7A5800;line-height:1.5}
+.personal-hint code{background:#fff;padding:1px 6px;border-radius:4px;font-size:11px;font-family:inherit;color:var(--gray-900)}
+
+/* Semester calendar */
+.sem-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.sem-tab{padding:7px 14px;border-radius:18px;border:1.5px solid #FFD0E2;background:#fff;color:#FF6B9D;cursor:pointer;font-weight:600;font-size:13px;transition:all .15s;font-family:inherit}
+.sem-tab:hover{background:var(--primary-bg)}
+.sem-tab.active{background:linear-gradient(135deg,#FF6B9D,#FF8E6E);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(255,107,157,.3)}
+.sem-tab-range{font-weight:400;font-size:11px;opacity:.85;margin-left:4px}
+.sem-summary{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 12px;font-size:12px;color:var(--gray-500);flex-wrap:wrap;gap:8px}
+.sem-empty{text-align:center;padding:36px 20px;color:var(--gray-500)}
+.sem-month-block{margin-bottom:18px}
+.sem-month-header{font-weight:700;font-size:14px;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.sem-month-count{font-size:11px;color:var(--gray-500);font-weight:400;background:var(--gray-50);padding:2px 8px;border-radius:10px}
+.sem-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.sem-week{background:#fff;border:1px solid var(--gray-200);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:6px}
+.sem-week:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.08)}
+.sem-week.partial{background:#FFFAE8;border-color:#FFD93D80}
+.sem-week.done{background:#E8FAF0;border-color:#2ECC7180}
+.sem-week.is-mine{outline:2px solid var(--primary);outline-offset:-2px}
+.sem-week-head{display:flex;justify-content:space-between;align-items:center}
+.sem-week-num{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:2px 8px;border-radius:8px}
+.sem-week-status{font-size:13px}
+.sem-week-label{font-size:12px;color:var(--gray-700);font-weight:600}
+.sem-week-slots{display:flex;flex-direction:column;gap:4px}
+.sem-slot{font-size:11px;padding:4px 6px;background:var(--gray-50);border-radius:5px;line-height:1.3}
+.sem-slot.empty{color:var(--gray-400);font-style:italic;text-align:center}
+.sem-slot.slot-done{background:#E8FAF0}
+.sem-slot.slot-mine{background:#FFE5EE;border-left:3px solid var(--primary)}
+.sem-slot-teacher{font-weight:700;color:var(--primary);margin-right:4px}
+.sem-slot-theme{color:var(--gray-700)}
+
+/* Week editor modal */
+#week-editor-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9500;display:none;align-items:center;justify-content:center;padding:20px}
+#week-editor-overlay.open{display:flex}
+.we-modal{background:#fff;border-radius:14px;width:100%;max-width:640px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.we-header{padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#FFF0F5,#FFE8E0)}
+.we-header h3{font-size:15px;font-weight:700;color:var(--gray-900)}
+.we-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);padding:0 4px;line-height:1}
+.we-close:hover{color:var(--gray-700)}
+.we-body{padding:16px 20px;overflow:auto;flex:1}
+.we-slot-row{display:grid;grid-template-columns:120px 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px}
+.we-slot-row .form-input{padding:7px 10px;font-size:13px}
+.we-done{font-size:12px;color:var(--gray-700);display:flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;user-select:none}
+.we-done input{cursor:pointer}
+.we-actions{padding:12px 20px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;gap:8px;background:var(--gray-50)}
+
+/* Curriculum index — 3패널 가로 배치, 각 패널 3열 (총 9열) */
+.curr-table{display:flex;gap:8px;align-items:flex-start;font-size:12px}
+.curr-section{display:flex;flex-direction:column;gap:0;flex:1 1 0;min-width:0}
+.curr-section-header{font-weight:700;font-size:13px;padding:8px 10px;text-align:center;border-radius:8px 8px 0 0;color:#fff;letter-spacing:.3px;margin-bottom:6px}
+.curr-section.sec-ig .curr-section-header{background:#FFD93D;color:#5C3D35}
+.curr-section.sec-pre .curr-section-header{background:#FFB3CC;color:#7A1F3D}
+.curr-section.sec-why .curr-section-header{background:linear-gradient(135deg,#4ECDC4,#3DB5A8);color:#fff}
+.curr-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.curr-cell{background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:6px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:3px;min-height:80px}
+.curr-cell:hover{border-color:var(--primary);box-shadow:0 4px 10px rgba(0,0,0,.08);transform:translateY(-1px)}
+.curr-cell.has-all{background:#E8FAF0;border-color:#2ECC7180}
+.curr-cell.has-some{background:#FFFAE8;border-color:#FFD93D80}
+.curr-cell-code{font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:2px 6px;border-radius:6px;align-self:flex-start;line-height:1.2}
+.curr-cell-themes{display:flex;flex-direction:column;gap:1px}
+.curr-theme{font-size:11px;color:var(--gray-700);line-height:1.35;padding:1px 0}
+.curr-theme.has-lesson{color:var(--green);font-weight:600}
+.curr-theme.has-lesson::before{content:'●';margin-right:3px;color:var(--green)}
+.curr-theme.is-new{color:#DC2626;font-weight:700}
+.curr-theme.is-new::after{content:'(新)';margin-left:2px;font-size:9px;color:#DC2626}
+.curr-legend{display:flex;gap:14px;font-size:11px;color:var(--gray-700);margin-bottom:12px;flex-wrap:wrap}
+.curr-legend-item{display:flex;align-items:center;gap:5px}
+.curr-legend-dot{width:10px;height:10px;border-radius:3px;border:1px solid rgba(0,0,0,.1)}
+.curr-search{padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:13px;width:100%;max-width:320px;margin-bottom:12px;outline:none}
+.curr-search:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,107,157,.12)}
+.curr-cell.dim{opacity:.25}
+@media(max-width:1100px){
+  .curr-table{flex-direction:column}
+  .curr-section{flex:1 1 auto;width:100%}
+}
+
+/* Dashboard curriculum widget */
+.curr-widget{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:8px}
+.curr-widget-cell{background:var(--gray-50);border-radius:8px;padding:8px 10px;text-align:center;cursor:pointer;transition:all .15s}
+.curr-widget-cell:hover{background:var(--primary-bg)}
+.curr-widget-cell .wv{font-size:18px;font-weight:700;color:var(--primary)}
+.curr-widget-cell .wl{font-size:11px;color:var(--gray-500);margin-top:2px}
+
 /* Print */
 @media print{.sidebar,.search-bar,.btn,.level-chips,.editor-tabs{display:none!important}.main{margin:0;padding:10px}}
 
@@ -431,6 +525,9 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
       <div class="nav-item" data-page="library" onclick="showPage('library')">
         <span class="icon">📚</span> 수업 연구 자료
       </div>
+      <div class="nav-item" data-page="curriculum" onclick="showPage('curriculum')">
+        <span class="icon">🗂️</span> 전체 레벨별 인덱스
+      </div>
       <div class="nav-divider"></div>
       <div class="nav-section">작성</div>
       <div class="nav-item" data-page="editor" onclick="showPage('editor')">
@@ -455,16 +552,20 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
     <section class="page active" id="page-dashboard">
       <div class="page-header">
         <h2>대시보드</h2>
-        <p>이번 달 세미나 현황을 한눈에 확인하세요</p>
+        <p>학기 일정과 내 작업을 한눈에 확인하세요</p>
       </div>
+      <div id="personal-box"></div>
       <div class="stats" id="stats"></div>
       <div class="card">
-        <div class="card-header"><span class="card-title">📅 이번 달 세미나 일정</span></div>
-        <div id="current-month-schedule"></div>
+        <div class="card-header"><span class="card-title">📅 학기 캘린더</span></div>
+        <div id="semester-calendar"></div>
       </div>
       <div class="card" style="margin-top:16px">
-        <div class="card-header"><span class="card-title">✅ 자료 작성 완료 현황</span></div>
-        <div id="completion-status"></div>
+        <div class="card-header">
+          <span class="card-title">🗂️ 전체 레벨별 인덱스 진척도</span>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('curriculum')">전체 보기 →</button>
+        </div>
+        <div id="curriculum-progress" class="curr-widget"></div>
       </div>
       <div class="card" style="margin-top:16px">
         <div class="card-header"><span class="card-title">📝 최근 작성된 수업 연구</span></div>
@@ -524,6 +625,22 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
     </section>
 
     <!-- Editor -->
+    <section class="page" id="page-curriculum">
+      <div class="page-header">
+        <h2>🗂️ 전체 레벨별 인덱스</h2>
+        <p>CMS 사고력수학 전체 테마 목록 — 셀 클릭 시 자료실에서 검색</p>
+      </div>
+      <input type="text" class="curr-search" id="curr-search-input" placeholder="테마명으로 필터링... (예: 무한, 도형)" oninput="renderCurriculumIndex()">
+      <div class="curr-legend">
+        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#fff;border:1px solid var(--gray-200)"></span>자료 없음</span>
+        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#FFFAE8;border-color:#FFD93D"></span>일부 작성됨</span>
+        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#E8FAF0;border-color:#2ECC71"></span>모두 작성됨</span>
+        <span class="curr-legend-item"><span style="color:var(--green);font-weight:700">●</span> 자료 있는 테마</span>
+        <span class="curr-legend-item"><span style="color:#DC2626;font-weight:700">신규</span> 2022 신규/변경 테마</span>
+      </div>
+      <div id="curriculum-grid"></div>
+    </section>
+
     <section class="page" id="page-editor">
       <div class="page-header">
         <h2>자료 작성 / 편집</h2>
@@ -718,6 +835,27 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
     <div id="textbook-panel">
       <div class="tb-header">📖 교재 이미지</div>
       <div class="tb-imgs" id="tb-imgs-list"></div>
+    </div>
+  </div>
+</div>
+<div id="week-editor-overlay">
+  <div class="we-modal">
+    <div class="we-header">
+      <h3 id="week-editor-title">주차 편집</h3>
+      <button class="we-close" onclick="closeWeekEditor()" title="닫기">×</button>
+    </div>
+    <div class="we-body">
+      <div id="week-editor-week-input" style="margin-bottom:12px">
+        <label class="form-label" style="display:block;margin-bottom:4px">주차 라벨 (예: 1주(3/6))</label>
+        <input type="text" id="we-week-label" class="form-input" style="font-size:13px">
+      </div>
+      <label class="form-label" style="display:block;margin-bottom:4px">슬롯 (선생님 / 테마 / 완료)</label>
+      <div id="week-editor-slots"></div>
+      <button class="btn btn-secondary btn-sm" onclick="weekEditorAddSlot()" style="margin-top:8px">+ 슬롯 추가</button>
+    </div>
+    <div class="we-actions">
+      <button class="btn btn-secondary" onclick="closeWeekEditor()">취소</button>
+      <button class="btn btn-primary" onclick="saveWeekEditor()">💾 저장</button>
     </div>
   </div>
 </div>
@@ -942,7 +1080,7 @@ const TEACHER_NAMES = {
   'kkm@mjcms.com': '김경미',
   'byj@mjcms.com': '변유진',
   'jsy@mjcms.com': '제선영',
-  'rira@mjcms.com': 'Rira'
+  'rira@mjcms.com': '황지향'
 };
 
 function getNameFromEmail(email) {
@@ -1098,6 +1236,140 @@ function getCustomLessons() {
   return _state.customLessons;
 }
 
+// ── 교과 인덱스 데이터 ──
+const CURRICULUM_INDEX = {"sections":{"IG":[{"code":"V-1","themes":[{"name":"우리 집에 외계 생명체가 살아요","isNew":false},{"name":"도형 조각 형제들","isNew":false}]},{"code":"V-2","themes":[{"name":"숲속 마을 곰돌이","isNew":false},{"name":"산타를 찾아요","isNew":false}]},{"code":"V-3","themes":[{"name":"몬스터 여행기","isNew":false},{"name":"숲속 동물 학교","isNew":false}]},{"code":"O-1","themes":[{"name":"푸카우카","isNew":false},{"name":"모여라 도형 친구들","isNew":false}]},{"code":"O-2","themes":[{"name":"친구들 찾아요","isNew":false},{"name":"더더와 대대","isNew":false}]},{"code":"O-3","themes":[{"name":"숫자나라","isNew":false},{"name":"그림 조각 놀이","isNew":false}]},{"code":"N-1","themes":[{"name":"알록달록","isNew":false},{"name":"이쪽일까 저쪽일까","isNew":false}]},{"code":"N-2","themes":[{"name":"달이와 별이","isNew":false},{"name":"자리를 찾아주세요","isNew":false}]},{"code":"N-3","themes":[{"name":"셈이 필요해","isNew":false},{"name":"여러 가지 모양","isNew":false}]},{"code":"K-1","themes":[{"name":"깨비 마을","isNew":false},{"name":"지지와 나니","isNew":false}]},{"code":"K-2","themes":[{"name":"토토네 마을 소소한 이야기","isNew":false},{"name":"어떻게 알았지, 몰래 보았을지도 몰라","isNew":false}]},{"code":"K-3","themes":[{"name":"누구세요","isNew":false},{"name":"친구들에게 물어보았어요","isNew":false}]}],"PRE":[{"code":"A-1","themes":[{"name":"사고뭉치 신데렐라","isNew":false},{"name":"삼각형과 사각형","isNew":false},{"name":"뾰로롱 뾰로롱","isNew":false},{"name":"무거운 것이 좋아","isNew":false}]},{"code":"A-2","themes":[{"name":"변신! 패턴블록","isNew":false},{"name":"어떤 수가 올까","isNew":false},{"name":"같은 모양 다른 모양","isNew":false},{"name":"물놀이는 즐거워","isNew":false}]},{"code":"A-3","themes":[{"name":"나누미 친구들","isNew":false},{"name":"숫자나라 운동회","isNew":false},{"name":"줄줄이 삼각형","isNew":false},{"name":"거미와 개미","isNew":false}]},{"code":"R-1","themes":[{"name":"테트로미노","isNew":false},{"name":"제멋대로 별","isNew":false},{"name":"곰들의 소풍","isNew":false},{"name":"두더지 마을","isNew":false}]},{"code":"R-2","themes":[{"name":"추리게임","isNew":false},{"name":"자리를 찾아라","isNew":false},{"name":"한 바퀴","isNew":false},{"name":"대로대로","isNew":false}]},{"code":"R-3","themes":[{"name":"유추게임","isNew":false},{"name":"난 알아요","isNew":false},{"name":"UFO퍼즐","isNew":false},{"name":"블랙일병 구하기","isNew":false}]},{"code":"C-1","themes":[{"name":"평면도형","isNew":false},{"name":"네벌랜드","isNew":false},{"name":"꼬부랑 지팡이","isNew":false},{"name":"이중추리게임","isNew":false}]},{"code":"C-2","themes":[{"name":"너, 슈퍼맨이지","isNew":false},{"name":"홀수와 짝수","isNew":false},{"name":"아기 늑대 삼형제","isNew":false},{"name":"도대체 몇 개야?","isNew":false}]},{"code":"C-3","themes":[{"name":"겹쳐질까요?","isNew":false},{"name":"쌓기나무놀이","isNew":false},{"name":"알포의 모험","isNew":false},{"name":"어부왕 피셔","isNew":false}]},{"code":"H-1","themes":[{"name":"네모나라","isNew":false},{"name":"펼치면 어떻게 될까?","isNew":false},{"name":"여왕과 앨리스","isNew":false},{"name":"성냥개비 놀이","isNew":false}]},{"code":"H-2","themes":[{"name":"스무고개","isNew":false},{"name":"요리보고 조리보고","isNew":false},{"name":"수학 실험","isNew":false},{"name":"경찰과 도둑","isNew":false}]},{"code":"H-3","themes":[{"name":"셋게임","isNew":false},{"name":"씨를 뿌려요요","isNew":false},{"name":"폴리아몬드","isNew":false},{"name":"마법의 약","isNew":false}]},{"code":"E-1","themes":[{"name":"얼렁이네 저녁식사","isNew":false},{"name":"병정놀이","isNew":false},{"name":"손오공","isNew":false},{"name":"영웅 람고","isNew":false}]},{"code":"E-2","themes":[{"name":"무엇을 알아야 할까?","isNew":false},{"name":"회전탑의 비밀","isNew":false},{"name":"사이좋은 삼남매","isNew":false},{"name":"내 자리는 어디?","isNew":false}]},{"code":"E-3","themes":[{"name":"디퍼를 찾아라","isNew":false},{"name":"폴리큐브","isNew":false},{"name":"늘이고 구부리고","isNew":false},{"name":"꿀벌의 집","isNew":false}]},{"code":"S-1","themes":[{"name":"기사 랜스롱","isNew":false},{"name":"내 맘대로 팔아요","isNew":false},{"name":"어떻게 나누지?","isNew":false},{"name":"색종이 놀이","isNew":false}]},{"code":"S-2","themes":[{"name":"뿌삐와 친구들","isNew":false},{"name":"눈금 없는 자","isNew":false},{"name":"위앞옆","isNew":false},{"name":"퀴즈네르 퍼즐","isNew":false}]},{"code":"S-3","themes":[{"name":"퀴즈네르 쌓기","isNew":false},{"name":"꼼꼼이네 아이스크림","isNew":false},{"name":"보지 않아도 알아요","isNew":false},{"name":"섬나라 꿈","isNew":false}]}],"WHY1":[{"code":"1-1","themes":[{"name":"보물섬","isNew":false},{"name":"월드컵","isNew":false},{"name":"구멍을 뚫어라","isNew":false},{"name":"삼각형 퍼즐","isNew":false}]},{"code":"1-2","themes":[{"name":"시간 알아보기","isNew":false},{"name":"쌓기나무","isNew":false},{"name":"지혜로운 일솝","isNew":false},{"name":"진영 바꾸기","isNew":false}]},{"code":"1-3","themes":[{"name":"바둑돌 규칙","isNew":false},{"name":"동글벌레 이야기","isNew":true},{"name":"만칼라 게임","isNew":true},{"name":"미로 찾기","isNew":false}]},{"code":"2-1","themes":[{"name":"도형 게임","isNew":true},{"name":"곱셈법","isNew":false},{"name":"축구 게임","isNew":false},{"name":"딩동댕","isNew":false}]},{"code":"2-2","themes":[{"name":"15만들기","isNew":false},{"name":"(新)분수 어림하기","isNew":true},{"name":"땅따먹기","isNew":false},{"name":"수학탐정","isNew":false}]},{"code":"2-3","themes":[{"name":"도형의 규칙성","isNew":false},{"name":"수리수리 마수리","isNew":false},{"name":"고누","isNew":false},{"name":"펀펀 퍼즐","isNew":true}]},{"code":"3-1","themes":[{"name":"적의 함선을 격침하라","isNew":false},{"name":"주사위와 전개도","isNew":false},{"name":"토끼몰이","isNew":false},{"name":"(新)퀵 드로잉","isNew":true}]},{"code":"3-2","themes":[{"name":"(新)곱곱이","isNew":true},{"name":"탱그램","isNew":false},{"name":"양을 가둬라","isNew":false},{"name":"벌집은 왜 육각기둥일까","isNew":false}]},{"code":"3-3","themes":[{"name":"기본도형 그리기","isNew":false},{"name":"에프론의 주사위","isNew":false},{"name":"야구게임","isNew":false},{"name":"헥스","isNew":false}]},{"code":"4-1","themes":[{"name":"4색 정리","isNew":false},{"name":"지혜 대탐험","isNew":false},{"name":"가우스 이야기","isNew":false},{"name":"도형의 분할","isNew":false}]},{"code":"4-2","themes":[{"name":"벌집 퍼즐","isNew":false},{"name":"원의 중심 찾기","isNew":false},{"name":"기사단의 이동","isNew":false},{"name":"가져가기 놀이 Ⅰ","isNew":false}]},{"code":"4-3","themes":[{"name":"정사각형 퍼즐","isNew":false},{"name":"삼각그물 놀이","isNew":false},{"name":"자라나는 새싹","isNew":false},{"name":"솔리테르","isNew":false}]}],"WHY2":[{"code":"5-1","themes":[{"name":"약수를 이용한 빙고놀이","isNew":false},{"name":"딴짓 일보","isNew":false},{"name":"도형의 넓이","isNew":false},{"name":"아르키메데스 퍼즐","isNew":false}]},{"code":"5-2","themes":[{"name":"강 건너기","isNew":false},{"name":"발상의 전환 Ⅰ","isNew":false},{"name":"단위 분수","isNew":false},{"name":"성냥 퍼즐","isNew":false}]},{"code":"5-3","themes":[{"name":"종이접기로 도형 만들기","isNew":false},{"name":"꼭지네모 놀이","isNew":false},{"name":"수의 규칙성","isNew":false},{"name":"창고정리","isNew":false}]},{"code":"6-1","themes":[{"name":"하트 퍼즐","isNew":false},{"name":"한 번씩만 지나요","isNew":true},{"name":"소수의 정체를 밝혀라","isNew":false},{"name":"분수와 소수의 카드게임","isNew":false}]},{"code":"6-2","themes":[{"name":"두 가지로 나타낸 세상","isNew":true},{"name":"내각의 합과 외각의 합","isNew":false},{"name":"(新)나이트 퍼즐","isNew":true},{"name":"원의 측정","isNew":false}]},{"code":"6-3","themes":[{"name":"복면산","isNew":false},{"name":"지오보드 게임","isNew":false},{"name":"슬라이딩 퍼즐","isNew":false},{"name":"조각보와 퀼트","isNew":false}]},{"code":"7-1","themes":[{"name":"테셀레이션 Ⅰ","isNew":false},{"name":"단서는 바로 수","isNew":true},{"name":"두 개로 충분씨의 비밀 레시피","isNew":true},{"name":"마법의 카드","isNew":false}]},{"code":"7-2","themes":[{"name":"배수 판별법","isNew":false},{"name":"(新)제멋대로 교통신호","isNew":true},{"name":"거듭제곱","isNew":false},{"name":"즐거운 논리 퍼즐","isNew":false}]},{"code":"7-3","themes":[{"name":"요술 달걀","isNew":false},{"name":"마방진 Ⅰ","isNew":false},{"name":"바둑돌 배열하기","isNew":false},{"name":"주사위를 굴려라","isNew":false}]},{"code":"8-1","themes":[{"name":"테트로미노","isNew":false},{"name":"등식의 이해","isNew":false},{"name":"주기","isNew":false},{"name":"발상의 전환 Ⅱ","isNew":false}]},{"code":"8-2","themes":[{"name":"소마 큐브","isNew":false},{"name":"Pick의 정리","isNew":false},{"name":"파스칼의 삼각형","isNew":false},{"name":"시크릿 사건 파일","isNew":true}]},{"code":"8-3","themes":[{"name":"방정식","isNew":false},{"name":"여러 가지 대칭","isNew":false},{"name":"나만의 연산 만들기","isNew":false},{"name":"네모네모 로직","isNew":false}]}],"WHY3":[{"code":"9-1","themes":[{"name":"암호 만들기와 해독","isNew":false},{"name":"기둥과 뿔의 부피 관계","isNew":false},{"name":"펜토미노","isNew":false},{"name":"색다른 볼링","isNew":false}]},{"code":"9-2","themes":[{"name":"도형의 결정 및 합동","isNew":false},{"name":"n진법의 연산","isNew":false},{"name":"필승전략을 찾아라","isNew":false},{"name":"알쏭달쏭 주사위","isNew":true}]},{"code":"9-3","themes":[{"name":"닮은 도형","isNew":false},{"name":"시간과 각","isNew":false},{"name":"모순과 역설","isNew":false},{"name":"스도쿠","isNew":false}]},{"code":"10-1","themes":[{"name":"악마의 퍼즐","isNew":false},{"name":"동그란 이슬비","isNew":false},{"name":"마방진 Ⅱ","isNew":false},{"name":"가져가기 놀이 Ⅱ","isNew":false}]},{"code":"10-2","themes":[{"name":"유클리드 호제법","isNew":false},{"name":"라틴 방진","isNew":false},{"name":"오일러의 정리 Ⅰ","isNew":false},{"name":"신비로운 수","isNew":false}]},{"code":"10-3","themes":[{"name":"단면도","isNew":false},{"name":"도형수","isNew":false},{"name":"기사들의 바꿔치기","isNew":false},{"name":"15퍼즐","isNew":false}]},{"code":"11-1","themes":[{"name":"하노이 탑 Ⅰ","isNew":false},{"name":"홀짝성","isNew":false},{"name":"개구리","isNew":false},{"name":"아인슈타인 퍼즐","isNew":false}]},{"code":"11-2","themes":[{"name":"부분 분수","isNew":false},{"name":"π 이야기","isNew":false},{"name":"수학의 착각","isNew":false},{"name":"사이클로이드","isNew":false}]},{"code":"11-3","themes":[{"name":"무한의 신비","isNew":false},{"name":"도형분할 게임","isNew":false},{"name":"길은 몇 가지?","isNew":false},{"name":"코드를 찾아라","isNew":false}]},{"code":"12-1","themes":[{"name":"뫼비우스의 띠","isNew":false},{"name":"피타고라스의 정리 Ⅰ","isNew":false},{"name":"달력 이야기","isNew":false},{"name":"프랙탈","isNew":false}]},{"code":"12-2","themes":[{"name":"황금비","isNew":false},{"name":"피타고라스의 정리 Ⅱ","isNew":false},{"name":"보이는 점","isNew":false},{"name":"참말과 거짓말 Ⅰ","isNew":false}]},{"code":"12-3","themes":[{"name":"정다면체","isNew":false},{"name":"정다면체의 순환","isNew":false},{"name":"바닥 덮기 퍼즐","isNew":false},{"name":"캐치 미","isNew":false}]}],"WHY4":[{"code":"13-1","themes":[{"name":"반사","isNew":false},{"name":"테셀레이션 Ⅱ","isNew":false},{"name":"작도 Ⅰ","isNew":false},{"name":"준정다면체","isNew":false}]},{"code":"13-2","themes":[{"name":"비둘기집의 원리 Ⅰ","isNew":false},{"name":"편지를 볼 수 있을까?","isNew":false},{"name":"피보나치 수열","isNew":false},{"name":"수박 자르기","isNew":false}]},{"code":"13-3","themes":[{"name":"참말과 거짓말 Ⅱ","isNew":false},{"name":"해밀턴 경로","isNew":false},{"name":"맨홀 뚜껑은 왜 둥글까?","isNew":false},{"name":"큐브 퍼즐","isNew":false}]},{"code":"14-1","themes":[{"name":"비둘기집의 원리 Ⅱ","isNew":false},{"name":"하노이 탑 Ⅱ","isNew":false},{"name":"논리적 추론","isNew":false},{"name":"축구 리그","isNew":false}]},{"code":"14-2","themes":[{"name":"가짜를 찾아라","isNew":false},{"name":"작도 Ⅱ","isNew":false},{"name":"캔 한 개를 더 넣을 수 있을까?","isNew":false},{"name":"고지를 점령하라","isNew":false}]},{"code":"14-3","themes":[{"name":"순열과 조합 Ⅰ","isNew":false},{"name":"작도 Ⅲ","isNew":false},{"name":"게임 이론","isNew":false},{"name":"성벽을 쌓아라","isNew":false}]},{"code":"15-1","themes":[{"name":"닮은 도형 퍼즐","isNew":false},{"name":"대푯값과 통계","isNew":false},{"name":"순열과 조합 Ⅱ","isNew":false},{"name":"Common Knowledge","isNew":false}]},{"code":"15-2","themes":[{"name":"복면산 Ⅱ","isNew":false},{"name":"증명과 귀류법","isNew":false},{"name":"페르마의 점","isNew":false},{"name":"삼각형의 중심","isNew":false}]},{"code":"15-3","themes":[{"name":"비유클리드 기하학","isNew":false},{"name":"연분수","isNew":false},{"name":"수학적 귀납법","isNew":false},{"name":"오일러 정리 Ⅱ","isNew":false}]}]}};
+
+// 테마명 → 작성된 자료가 있는지 체크
+function _normalizeThemeKey(s) {
+  return (s || '').toLowerCase().replace(/[\s\-_().·,'·"\[\]]+/g, '').replace(/^新|\(新\)|\[新\]/g, '');
+}
+let _lessonThemeIndex = null;
+function buildLessonThemeIndex() {
+  const idx = new Map(); // normalized theme key → [lesson_id, ...]
+  getAllLessons().forEach(l => {
+    const title = l.title || '';
+    const key = _normalizeThemeKey(title);
+    // 또한 'WHY 11-3-1 무한의 신비'에서 마지막 의미 부분 추출
+    // 키 자체로 매칭하기 어려우니, 모든 테마명을 순회하며 부분 매칭
+    if (!idx.has('__all__')) idx.set('__all__', []);
+    idx.get('__all__').push({ id: l.id, title, normTitle: key, level: l.level, author: l.author });
+  });
+  _lessonThemeIndex = idx;
+}
+function findLessonsForTheme(themeName) {
+  if (!_lessonThemeIndex) buildLessonThemeIndex();
+  const key = _normalizeThemeKey(themeName);
+  if (!key) return [];
+  const all = _lessonThemeIndex.get('__all__') || [];
+  return all.filter(l => l.normTitle.includes(key));
+}
+
+// ── 전체 레벨별 인덱스 페이지 렌더 (3패널 가로 × 각 3열 = 9열) ──
+function renderCurriculumIndex() {
+  const container = document.getElementById('curriculum-grid');
+  if (!container) return;
+  buildLessonThemeIndex();
+  const search = (document.getElementById('curr-search-input')?.value || '').trim().toLowerCase();
+  const sec = CURRICULUM_INDEX.sections;
+
+  const renderCell = (item) => {
+    const themes = item.themes || [];
+    const themesWithMatch = themes.map(t => ({ ...t, matched: findLessonsForTheme(t.name).length > 0 }));
+    const matchCount = themesWithMatch.filter(t => t.matched).length;
+    const allDone = matchCount === themes.length && themes.length > 0;
+    const someDone = matchCount > 0 && !allDone;
+    const cls = allDone ? 'has-all' : someDone ? 'has-some' : '';
+    let matchesSearch = true;
+    if (search) {
+      const inCode = item.code.toLowerCase().includes(search);
+      const inTheme = themes.some(t => t.name.toLowerCase().includes(search));
+      matchesSearch = inCode || inTheme;
+    }
+    const dim = !matchesSearch ? 'dim' : '';
+    const themesHtml = themesWithMatch.map(t => {
+      const c = (t.matched ? 'has-lesson ' : '') + (t.isNew ? 'is-new' : '');
+      return `<div class="curr-theme ${c}" onclick="event.stopPropagation();searchByTheme('${t.name.replace(/'/g, "\\'")}')">${escHtml(t.name)}</div>`;
+    }).join('');
+    return `<div class="curr-cell ${cls} ${dim}" onclick="searchByTheme('${item.code}')">
+      <div class="curr-cell-code">${escHtml(item.code)}</div>
+      <div class="curr-cell-themes">${themesHtml}</div>
+    </div>`;
+  };
+
+  // 각 섹션 패널 — 3열 그리드 (-1 / -2 / -3)
+  const igHtml = `<div class="curr-section sec-ig">
+    <div class="curr-section-header">생각하는 I.G</div>
+    <div class="curr-grid-3">${(sec.IG||[]).map(renderCell).join('')}</div>
+  </div>`;
+  const preHtml = `<div class="curr-section sec-pre">
+    <div class="curr-section-header">Pre-WHY</div>
+    <div class="curr-grid-3">${(sec.PRE||[]).map(renderCell).join('')}</div>
+  </div>`;
+  // WHY는 4개 그룹을 합쳐서 정렬 후 3열
+  const whyAll = [...(sec.WHY1||[]), ...(sec.WHY2||[]), ...(sec.WHY3||[]), ...(sec.WHY4||[])];
+  whyAll.sort((a,b) => {
+    const pa = a.code.split('-').map(Number);
+    const pb = b.code.split('-').map(Number);
+    return (pa[0]-pb[0]) || (pa[1]-pb[1]);
+  });
+  const whyHtml = `<div class="curr-section sec-why">
+    <div class="curr-section-header">WHY (1~15레벨)</div>
+    <div class="curr-grid-3">${whyAll.map(renderCell).join('')}</div>
+  </div>`;
+
+  container.innerHTML = `<div class="curr-table">${igHtml}${preHtml}${whyHtml}</div>`;
+}
+
+function searchByTheme(themeName) {
+  // 자료실로 이동 후 모든 필터 초기화 + 검색어 입력
+  showPage('library');
+  setTimeout(() => {
+    // 작성자 필터 → "전체 작성자"
+    const authorFilter = document.getElementById('author-filter');
+    if (authorFilter) authorFilter.value = '';
+    // 레벨 칩 → "전체"
+    if (typeof currentLevel !== 'undefined') currentLevel = '';
+    // 검색어 입력
+    const inp = document.getElementById('search-input');
+    if (inp) {
+      inp.value = themeName;
+      if (typeof onSearchInput === 'function') onSearchInput();
+      else if (typeof filterLessons === 'function') filterLessons();
+    } else if (typeof filterLessons === 'function') {
+      filterLessons();
+    }
+  }, 100);
+}
+
+// 대시보드 진척도 위젯 렌더
+function renderCurriculumProgress() {
+  const container = document.getElementById('curriculum-progress');
+  if (!container) return;
+  buildLessonThemeIndex();
+  const sec = CURRICULUM_INDEX.sections;
+  const groups = [
+    { label: 'IG', items: sec.IG },
+    { label: 'Pre-WHY', items: sec.PRE },
+    { label: 'WHY 1-4', items: sec.WHY1 },
+    { label: 'WHY 5-8', items: sec.WHY2 },
+    { label: 'WHY 9-12', items: sec.WHY3 },
+    { label: 'WHY 13-15', items: sec.WHY4 }
+  ];
+  const html = groups.map(g => {
+    let total = 0, done = 0;
+    (g.items || []).forEach(it => (it.themes||[]).forEach(t => {
+      total++;
+      if (findLessonsForTheme(t.name).length > 0) done++;
+    }));
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    return `<div class="curr-widget-cell" onclick="showPage('curriculum')" title="${g.label} ${done}/${total} (${pct}%)">
+      <div class="wv">${pct}%</div>
+      <div class="wl">${g.label} ${done}/${total}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML = html;
+}
+
 // Navigation
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1108,6 +1380,7 @@ function showPage(page) {
   if (page === 'schedule') renderSchedule();
   if (page === 'library') renderLibrary();
   if (page === 'editor') renderMyLessons();
+  if (page === 'curriculum') renderCurriculumIndex();
 }
 
 // Toast
@@ -1119,58 +1392,347 @@ function showToast(msg) {
 }
 
 // Dashboard
-function renderDashboard() {
-  const allLessons = getAllLessons();
-  // 현재 로그인한 유저가 작성한 교안만 카운트 (author_email 비교, 구버전은 이름 매핑)
-  const customCount = getCustomLessons().filter(isMyLesson).length;
-  const levels = [...new Set(allLessons.map(l => l.level))];
-  
-  // Find current month
-  const now = new Date();
-  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const currentMonthName = monthNames[now.getMonth()];
-  
-  document.getElementById('stats').innerHTML = `
-    <div class="stat-card"><div class="stat-value">${allLessons.length}</div><div class="stat-label">전체 수업 연구</div></div>
-    <div class="stat-card"><div class="stat-value">${levels.length}</div><div class="stat-label">레벨 수</div></div>
-    <div class="stat-card"><div class="stat-value">${customCount}</div><div class="stat-label">내가 작성한 자료</div></div>
-    <div class="stat-card"><div class="stat-value">${getSchedule().months.length}</div><div class="stat-label">운영 월수</div></div>
+// ── 학기 캘린더 ──
+const SEMESTER_DEFS = {
+  winter: { label: '겨울', range: '12-2월', monthNumbers: [12, 1, 2] },
+  spring: { label: '봄',   range: '3-5월',  monthNumbers: [3, 4, 5] },
+  summer: { label: '여름', range: '6-8월',  monthNumbers: [6, 7, 8] },
+  fall:   { label: '가을', range: '9-11월', monthNumbers: [9, 10, 11] }
+};
+function getCurrentSemester() {
+  const m = new Date().getMonth() + 1;
+  if (m === 12 || m <= 2) return 'winter';
+  if (m <= 5) return 'spring';
+  if (m <= 8) return 'summer';
+  return 'fall';
+}
+let _currentSemester = getCurrentSemester();
+
+// 월 이름 매칭 (예: '3월', '3월 (가산)' 모두 3월로 인식)
+function _monthMatchesNumber(name, n) {
+  if (!name) return false;
+  const m = String(name).match(/(\d+)\s*월/);
+  return m && parseInt(m[1]) === n;
+}
+function getSemesterMonths(sem) {
+  const def = SEMESTER_DEFS[sem];
+  if (!def) return [];
+  const allMonths = (getSchedule().months) || [];
+  return def.monthNumbers
+    .map(n => allMonths.find(m => _monthMatchesNumber(m.name, n)))
+    .filter(Boolean);
+}
+
+function selectSemester(sem) {
+  _currentSemester = sem;
+  renderSemesterCalendar();
+  renderStatCards();
+}
+
+function renderSemesterCalendar() {
+  const container = document.getElementById('semester-calendar');
+  if (!container) return;
+  const myName = sessionStorage.getItem('cms_name') || '';
+  const myNorm = normalizeName(myName);
+  const months = getSemesterMonths(_currentSemester);
+
+  const tabsHtml = Object.entries(SEMESTER_DEFS).map(([key, def]) => {
+    const active = _currentSemester === key ? 'active' : '';
+    return `<button type="button" class="sem-tab ${active}" onclick="selectSemester('${key}')">${def.label}<span class="sem-tab-range"> ${def.range}</span></button>`;
+  }).join('');
+
+  let totalWeeks = months.reduce((s, m) => s + ((m.weeks && m.weeks.length) || 0), 0);
+  let weekCounter = 0;
+  const monthsHtml = months.length === 0
+    ? `<div class="sem-empty">
+        <div style="font-size:32px;margin-bottom:8px">📭</div>
+        <div style="margin-bottom:12px;color:var(--gray-700)">${SEMESTER_DEFS[_currentSemester].label} 학기에는 일정이 등록되지 않았습니다</div>
+        <button class="btn btn-primary" onclick="showPage('schedule')">일정 페이지에서 추가하기</button>
+      </div>`
+    : months.map(m => {
+        const weeks = m.weeks || [];
+        return `<div class="sem-month-block">
+          <div class="sem-month-header">📅 ${escHtml(m.name)}<span class="sem-month-count">${weeks.length}주차</span></div>
+          <div class="sem-week-grid">
+            ${weeks.map((w, wi) => {
+              weekCounter++;
+              const slots = getWeekSlots(w);
+              const slotStatuses = slots.map((_, si) => getSlotDone(m.name, w.week, si));
+              const allDone = slots.length > 0 && slotStatuses.every(Boolean);
+              const someDone = slotStatuses.some(Boolean);
+              const isMine = myNorm && slots.some(sl => normalizeName(sl.teacher) === myNorm);
+              const cls = (allDone ? 'done' : someDone ? 'partial' : '') + (isMine ? ' is-mine' : '');
+              const monthEsc = String(m.name).replace(/'/g, "\\'");
+              return `<div class="sem-week ${cls}" onclick="openWeekEditor('${monthEsc}', ${wi})">
+                <div class="sem-week-head">
+                  <span class="sem-week-num">${weekCounter}주차</span>
+                  <span class="sem-week-status">${allDone ? '✅' : someDone ? '◐' : '○'}</span>
+                </div>
+                <div class="sem-week-label">${escHtml(w.week || '날짜 미정')}</div>
+                <div class="sem-week-slots">
+                  ${slots.length === 0 ? '<div class="sem-slot empty">미배정</div>' :
+                    slots.map((sl, si) => {
+                      const done = slotStatuses[si];
+                      const mine = myNorm && normalizeName(sl.teacher) === myNorm;
+                      return `<div class="sem-slot ${done ? 'slot-done' : ''} ${mine ? 'slot-mine' : ''}">
+                        <span class="sem-slot-teacher">${escHtml(sl.teacher || '?')}</span><span class="sem-slot-theme">${escHtml(sl.theme || '주제 미정')}</span>
+                      </div>`;
+                    }).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+  container.innerHTML = `
+    <div class="sem-tabs">${tabsHtml}</div>
+    <div class="sem-summary">
+      <span><strong>${SEMESTER_DEFS[_currentSemester].label}학기</strong> · 총 ${totalWeeks}주차 (목표 12주차)</span>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('schedule')">📋 전체 일정 편집</button>
+    </div>
+    ${monthsHtml}
   `;
-  
-  // Current month schedule
-  const cm = getSchedule().months.find(m => m.name.includes(currentMonthName)) || getSchedule().months[0];
-  let cmHtml = '';
-  if (cm) {
-    cmHtml += `<div style="font-weight:600;margin-bottom:8px;color:var(--primary)">${cm.name}</div>`;
-    if (cm.direction) cmHtml += `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">${cm.direction}</div>`;
-    cm.weeks.forEach(w => {
-      const slots = getWeekSlots(w);
-      const slotCols = `grid-template-columns:90px repeat(${slots.length},minmax(140px,1fr));min-width:${90 + slots.length * 140}px`;
-      cmHtml += `<div class="week-row" style="${slotCols}">
-        <div class="week-label">${w.week}</div>
-        ${slots.map((sl, si) => {
-          const done = getSlotDone(cm.name, w.week, si);
-          return `<div class="week-cell">
-            <div class="week-teacher-row"><span class="week-teacher">${sl.teacher}</span>${sl.theme&&done?'<span class="status-dot done">✅</span>':sl.theme?'<span class="status-dot">○</span>':''}</div>
-            ${makeThemeLink(sl.theme)}
-          </div>`;
-        }).join('')}
-      </div>`;
-    });
+}
+
+// ── 주차 편집 모달 ──
+let _weekEditorCtx = null;
+function openWeekEditor(monthName, weekIdx) {
+  const sched = getSchedule();
+  const month = (sched.months || []).find(m => m.name === monthName);
+  if (!month) { showToast('월을 찾을 수 없습니다'); return; }
+  const week = (month.weeks || [])[weekIdx];
+  if (!week) { showToast('주차를 찾을 수 없습니다'); return; }
+  _weekEditorCtx = { monthName, weekIdx, originalWeekLabel: week.week };
+
+  document.getElementById('week-editor-title').textContent = `${monthName} ${week.week || '주차 편집'}`;
+  document.getElementById('we-week-label').value = week.week || '';
+
+  const slots = getWeekSlots(week);
+  const slotsContainer = document.getElementById('week-editor-slots');
+  slotsContainer.innerHTML = '';
+  slots.forEach((sl, si) => weekEditorAppendSlot(sl.teacher || '', sl.theme || '', getSlotDone(monthName, week.week, si)));
+  if (slots.length === 0) { weekEditorAppendSlot('', '', false); weekEditorAppendSlot('', '', false); }
+
+  document.getElementById('week-editor-overlay').classList.add('open');
+}
+
+function weekEditorAppendSlot(teacher, theme, done) {
+  const container = document.getElementById('week-editor-slots');
+  const div = document.createElement('div');
+  div.className = 'we-slot-row';
+  div.innerHTML = `
+    <input type="text" class="form-input we-teacher" value="${escHtml(teacher)}" placeholder="선생님">
+    <input type="text" class="form-input we-theme" value="${escHtml(theme)}" placeholder="테마">
+    <label class="we-done"><input type="checkbox" class="we-status" ${done ? 'checked' : ''}> 완료</label>
+    <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()" title="삭제">×</button>`;
+  container.appendChild(div);
+}
+
+function weekEditorAddSlot() { weekEditorAppendSlot('', '', false); }
+
+function closeWeekEditor() {
+  document.getElementById('week-editor-overlay').classList.remove('open');
+  _weekEditorCtx = null;
+}
+
+async function saveWeekEditor() {
+  if (!_weekEditorCtx) return;
+  const { monthName, weekIdx, originalWeekLabel } = _weekEditorCtx;
+  const sched = JSON.parse(JSON.stringify(getSchedule()));
+  const month = sched.months.find(m => m.name === monthName);
+  if (!month) { closeWeekEditor(); return; }
+  const week = month.weeks[weekIdx];
+  if (!week) { closeWeekEditor(); return; }
+
+  const newWeekLabel = document.getElementById('we-week-label').value.trim();
+  week.week = newWeekLabel;
+
+  const rows = Array.from(document.querySelectorAll('#week-editor-slots .we-slot-row'));
+  const newSlots = rows.map(row => ({
+    teacher: row.querySelector('.we-teacher').value.trim(),
+    theme: row.querySelector('.we-theme').value.trim()
+  }));
+  Object.assign(week, slotsToLegacy(newSlots));
+
+  // 슬롯 완료 상태: 라벨이 바뀌었으면 기존 키 정리, 새 키로 저장
+  if (originalWeekLabel && originalWeekLabel !== newWeekLabel) {
+    const oldKey = monthName + '_' + originalWeekLabel;
+    delete _state.weekStatus[oldKey];
+    try { await _sb.from('week_status').delete().eq('id', oldKey); } catch(_) {}
   }
-  document.getElementById('current-month-schedule').innerHTML = cmHtml;
-  
-  // Recent lessons (last 5)
-  const recent = allLessons.slice(-5).reverse();
-  let rl = '';
-  recent.forEach(l => {
-    rl += `<div class="my-lesson-item">
-      <div class="my-lesson-info"><h4>${l.title}</h4><p>${l.level} · ${l.author}</p></div>
-      <span class="badge badge-level">${l.level}</span>
-    </div>`;
+  for (let si = 0; si < rows.length; si++) {
+    const checked = rows[si].querySelector('.we-status').checked;
+    setSlotDone(monthName, newWeekLabel, si, checked);
+  }
+  const key = monthName + '_' + newWeekLabel;
+  const st = _state.weekStatus[key] || {t1:false, t2:false};
+  try {
+    window._justSaved = Date.now();
+    await _sb.from('week_status').upsert({
+      id: key, month_name: monthName, week_label: newWeekLabel,
+      t1_done: st.t1, t2_done: st.t2, updated_at: new Date().toISOString()
+    });
+  } catch(e) { console.warn('week_status upsert:', e); }
+
+  await saveScheduleData(sched);
+
+  showToast('✅ 저장되었습니다');
+  closeWeekEditor();
+  renderDashboard();
+  if (typeof renderSchedule === 'function') renderSchedule();
+}
+
+// ── 개인화 박스 ──
+// 이름 매칭: 대소문자 무시 + 부분일치 (양방향)
+function _isMyTeacherSlot(slotTeacher, myName, myNormName) {
+  if (!slotTeacher) return false;
+  const slot = normalizeName(slotTeacher).toLowerCase();
+  const me = (myNormName || '').toLowerCase();
+  const meRaw = (myName || '').toLowerCase();
+  if (!slot || !me) return false;
+  if (slot === me) return true;
+  // 부분일치: 슬롯 텍스트가 내 이름을 포함하거나, 내 이름이 슬롯 텍스트를 포함
+  if (slot.includes(me) || me.includes(slot)) return true;
+  if (meRaw && (slot.includes(meRaw) || meRaw.includes(slot))) return true;
+  return false;
+}
+
+function renderPersonalBox() {
+  const container = document.getElementById('personal-box');
+  if (!container) return;
+  const myName = sessionStorage.getItem('cms_name') || '';
+  if (!myName) { container.innerHTML = ''; return; }
+  const myNorm = normalizeName(myName);
+  const months = (getSchedule().months) || [];
+
+  const monthOrder = [3,4,5,6,7,8,9,10,11,12,1,2];
+  const myUpcoming = [];
+  // 일정에 등장하는 모든 선생님 이름 수집 (디버그 안내용)
+  const teacherNames = new Set();
+  months.forEach(m => {
+    const mm = String(m.name).match(/(\d+)\s*월/);
+    const monthNum = mm ? parseInt(mm[1]) : 99;
+    (m.weeks || []).forEach((w, wi) => {
+      const slots = getWeekSlots(w);
+      slots.forEach((sl, si) => {
+        if (sl.teacher) teacherNames.add(sl.teacher);
+        if (_isMyTeacherSlot(sl.teacher, myName, myNorm) && !getSlotDone(m.name, w.week, si)) {
+          myUpcoming.push({ monthName: m.name, monthNum, weekIdx: wi, week: w.week, theme: sl.theme || '주제 미정' });
+        }
+      });
+    });
   });
-  document.getElementById('recent-lessons').innerHTML = rl || '<div class="empty-state"><p>아직 자료가 없습니다</p></div>';
-  renderCompletionStatus();
+  myUpcoming.sort((a, b) => {
+    const ai = monthOrder.indexOf(a.monthNum);
+    const bi = monthOrder.indexOf(b.monthNum);
+    return ai - bi;
+  });
+
+  const next = myUpcoming[0];
+  // 매칭 안 됐을 때, 일정에 비슷한 이름이 있는지 힌트
+  let hintHtml = '';
+  if (!next && teacherNames.size > 0) {
+    const myLow = myNorm.toLowerCase();
+    // 비슷한 이름 후보 찾기 (앞 글자 같거나 부분 포함)
+    const similar = [...teacherNames].filter(t => {
+      const tn = normalizeName(t).toLowerCase();
+      return tn !== myLow && (tn.includes(myLow.slice(0,1)) || tn.startsWith(myLow.slice(0,1)));
+    }).slice(0, 5);
+    hintHtml = `<div class="personal-hint" title="이름 매칭 안 됨">
+      현재 인식되는 내 이름: <strong>${escHtml(myName)}</strong>
+      ${similar.length ? `· 일정에 있는 비슷한 이름: ${similar.map(s => `<code>${escHtml(s)}</code>`).join(', ')}` : ''}
+      <br><span style="opacity:.7">슬롯의 선생님 이름이 위와 일치(또는 포함)해야 표시됩니다.</span>
+    </div>`;
+  }
+
+  const html = `
+    <div class="personal-box">
+      <div class="personal-greeting">👋 안녕하세요, <strong>${escHtml(myName)}</strong>!</div>
+      ${next
+        ? `<div class="personal-task">
+            <div class="task-label">다음 내 발표</div>
+            <div class="task-detail">${escHtml(next.monthName)} ${escHtml(next.week)} · ${escHtml(next.theme)}</div>
+            ${myUpcoming.length > 1 ? `<div class="task-more">+ ${myUpcoming.length - 1}개 더 예정</div>` : ''}
+          </div>`
+        : `<div class="personal-task all-done">📌 예정된 내 발표가 없어요${hintHtml ? '' : ''}</div>`
+      }
+    </div>
+    ${hintHtml}`;
+  container.innerHTML = html;
+}
+
+// ── 통계 카드 ──
+function renderStatCards() {
+  const container = document.getElementById('stats');
+  if (!container) return;
+  const myName = sessionStorage.getItem('cms_name') || '';
+  const myNorm = normalizeName(myName);
+  const customLessons = getCustomLessons();
+  const myCount = customLessons.filter(isMyLesson).length;
+
+  // 이번 학기 진행률 (선택된 학기 기준)
+  const semMonths = getSemesterMonths(_currentSemester);
+  let semTotal = 0, semDone = 0;
+  semMonths.forEach(m => {
+    (m.weeks || []).forEach(w => {
+      const slots = getWeekSlots(w);
+      slots.forEach((_, si) => {
+        semTotal++;
+        if (getSlotDone(m.name, w.week, si)) semDone++;
+      });
+    });
+  });
+  const semPct = semTotal > 0 ? Math.round(semDone / semTotal * 100) : 0;
+
+  // 내 남은 발표 수 (전체 학기)
+  let myPendingCount = 0;
+  ((getSchedule().months) || []).forEach(m => {
+    (m.weeks || []).forEach(w => {
+      const slots = getWeekSlots(w);
+      slots.forEach((sl, si) => {
+        if (normalizeName(sl.teacher) === myNorm && !getSlotDone(m.name, w.week, si)) myPendingCount++;
+      });
+    });
+  });
+
+  const totalCustom = customLessons.length;
+
+  container.innerHTML = `
+    <div class="stat-card"><div class="stat-value">${semPct}%</div><div class="stat-label">${SEMESTER_DEFS[_currentSemester].label}학기 진행 (${semDone}/${semTotal})</div></div>
+    <div class="stat-card"><div class="stat-value">${myPendingCount}</div><div class="stat-label">내 남은 발표</div></div>
+    <div class="stat-card"><div class="stat-value">${myCount}</div><div class="stat-label">내가 작성한 자료</div></div>
+    <div class="stat-card"><div class="stat-value">${totalCustom}</div><div class="stat-label">전체 등록 자료</div></div>
+  `;
+}
+
+// ── 최근 작성 (버그 수정: customLessons는 updated_at DESC라 앞에서 자르는 게 맞음) ──
+function renderRecentLessons() {
+  const container = document.getElementById('recent-lessons');
+  if (!container) return;
+  const recent = getCustomLessons()
+    .slice()
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .slice(0, 5);
+  const html = recent.map(l => {
+    const date = l.updatedAt ? new Date(l.updatedAt).toLocaleDateString('ko-KR') : '';
+    return `<div class="my-lesson-item" style="cursor:pointer" onclick="loadLessonToEditor('${l.id}', true)">
+      <div class="my-lesson-info">
+        <h4>${escHtml(l.title)} ${l.author ? `<span style="font-weight:400;color:var(--gray-500);font-size:12px">· ${escHtml(l.author)}</span>` : ''}</h4>
+        <p>${escHtml(l.level)} ${date ? '· ' + date : ''}</p>
+      </div>
+      <span class="badge badge-level">${escHtml(l.level)}</span>
+    </div>`;
+  }).join('');
+  container.innerHTML = html || '<div class="empty-state"><p>아직 자료가 없습니다</p></div>';
+}
+
+function renderDashboard() {
+  renderPersonalBox();
+  renderStatCards();
+  renderSemesterCalendar();
+  renderCurriculumProgress();
+  renderRecentLessons();
 }
 
 // ── 일정 편집 ──
