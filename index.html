@@ -925,11 +925,37 @@ async function _sbLoad() {
       lessonsQuery = lessonsQuery.or(`data->>center.eq.${myCenter},data->>center.is.null`);
     }
     lessonsQuery = lessonsQuery.range(0, LESSON_PAGE_SIZE - 1);
-    const [schedRes, lessonsRes, statusRes] = await Promise.all([
+    const [schedRes, lessonsRes, statusRes, teachersRes] = await Promise.all([
       _sb.from('seminar_schedule').select('data').eq('id', schedId).maybeSingle(),
       lessonsQuery,
       _sb.from('week_status').select('*'),
+      _sb.from('teachers').select('email, name, aliases, is_admin'),
     ]);
+    // [신규] teachers 결과 반영 + 로그인 시 임시 이름 정정
+    if (teachersRes && !teachersRes.error && Array.isArray(teachersRes.data) && teachersRes.data.length > 0) {
+      _teachers = teachersRes.data.map(t => ({
+        email: (t.email || '').toLowerCase(),
+        name: t.name || '',
+        aliases: Array.isArray(t.aliases) ? t.aliases : [],
+        is_admin: !!t.is_admin
+      }));
+      _teachersLoaded = true;
+      const myEmail = (sessionStorage.getItem('cms_email') || '').toLowerCase();
+      if (myEmail) {
+        const fresh = getNameFromEmail(myEmail);
+        if (fresh && fresh !== sessionStorage.getItem('cms_name')) {
+          sessionStorage.setItem('cms_name', fresh);
+          const tag = document.getElementById('my-name-tag');
+          if (tag) {
+            if (isAdmin()) {
+              tag.innerHTML = '👤 ' + fresh + ' <span style="background:#DC2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">관리자</span>';
+            } else {
+              tag.textContent = '👤 ' + fresh;
+            }
+          }
+        }
+      }
+    }
     bar.style.width = '80%';
     if (schedRes.data) _state.schedule = schedRes.data.data;
     if (lessonsRes.data) {
@@ -1080,17 +1106,74 @@ function showSyncToast(msg) {
 }
 
 // ── 선생님 이름 매핑 ──
-const TEACHER_NAMES = {
-  'ysh@mjcms.com': '윤시현',
-  'kkm@mjcms.com': '김경미',
-  'byj@mjcms.com': '변유진',
-  'jsy@mjcms.com': '제선영',
-  'rira@mjcms.com': '황지향',
-  'lhl@drcms.com': '이향림'
-};
+// ── 선생님 정보 (Supabase teachers 테이블에서 동적 로드) ──
+// DB 로드가 실패하거나 아직 안 됐을 때를 위한 fallback. 새 선생님이 추가되면
+// Supabase 콘솔에서 행을 추가하면 되고, 굳이 코드를 고치지 않아도 됨.
+const TEACHERS_FALLBACK = [
+  // 명지센터 (mjcms.com)
+  {email:'ysh@mjcms.com',  name:'윤시현', aliases:['윤시현T'],                is_admin:false},
+  {email:'kkm@mjcms.com',  name:'김경미', aliases:['김경미T','김경미 대리'],   is_admin:false},
+  {email:'byj@mjcms.com',  name:'변유진', aliases:['변유진T'],                is_admin:false},
+  {email:'jsy@mjcms.com',  name:'제선영', aliases:['제선영T','제선영 T'],      is_admin:false},
+  {email:'rira@mjcms.com', name:'황지향', aliases:['황지향T','황지향 센터장'], is_admin:true},
+  // 동래본원 (drcms.com)
+  {email:'lhl@drcms.com',  name:'이향림', aliases:['이향림T'],                is_admin:false},
+  {email:'bsh@drcms.com',  name:'배소현', aliases:['배소현T'],                is_admin:false},
+  {email:'mjh@drcms.com',  name:'문지혜', aliases:['문지혜T'],                is_admin:false},
+  {email:'yis@drcms.com',  name:'유인선', aliases:['유인선T'],                is_admin:false},
+  {email:'kej@drcms.com',  name:'권은정', aliases:['권은정T'],                is_admin:false},
+  {email:'jsh@drcms.com',  name:'정송희', aliases:['정송희T'],                is_admin:false},
+  {email:'kym@drcms.com',  name:'강영미', aliases:['강영미T'],                is_admin:false},
+  {email:'hhj@drcms.com',  name:'홍현진', aliases:['홍현진T'],                is_admin:false},
+  {email:'lhr@drcms.com',  name:'이혜림', aliases:['이혜림T'],                is_admin:false},
+  // 동부산센터 (dbcms.com)
+  {email:'leg@dbcms.com',  name:'이의금', aliases:['이의금T'],                is_admin:false},
+  {email:'ymn@dbcms.com',  name:'윤미나', aliases:['윤미나T'],                is_admin:false},
+  {email:'hey@dbcms.com',  name:'홍은영', aliases:['홍은영T'],                is_admin:false},
+  {email:'hyj@dbcms.com',  name:'허유진', aliases:['허유진T'],                is_admin:false},
+  {email:'chj@dbcms.com',  name:'최희주', aliases:['최희주T'],                is_admin:false},
+  {email:'shw@dbcms.com',  name:'서헌욱', aliases:['서헌욱T'],                is_admin:false},
+  {email:'pjh@dbcms.com',  name:'박지혜', aliases:['박지혜T'],                is_admin:false},
+  {email:'jdu@dbcms.com',  name:'정다움', aliases:['정다움T'],                is_admin:false},
+  {email:'hsh@dbcms.com',  name:'허시현', aliases:['허시현T'],                is_admin:false}
+];
+let _teachers = TEACHERS_FALLBACK.slice();
+let _teachersLoaded = false;
+
+async function loadTeachers() {
+  try {
+    const { data, error } = await _sb.from('teachers')
+      .select('email, name, aliases, is_admin');
+    if (error) throw error;
+    if (Array.isArray(data) && data.length > 0) {
+      _teachers = data.map(t => ({
+        email: (t.email || '').toLowerCase(),
+        name: t.name || '',
+        aliases: Array.isArray(t.aliases) ? t.aliases : [],
+        is_admin: !!t.is_admin
+      }));
+      _teachersLoaded = true;
+    }
+  } catch(e) {
+    console.warn('teachers 테이블 로드 실패, fallback 사용:', e);
+  }
+}
 
 function getNameFromEmail(email) {
-  return TEACHER_NAMES[email] || email.split('@')[0];
+  if (!email) return '';
+  const e = String(email).toLowerCase();
+  const t = _teachers.find(x => x.email === e);
+  return t ? t.name : email.split('@')[0];
+}
+
+// 구버전 교안: author 이름만 있고 author_email이 없을 때 이름 → 이메일 변환
+function getEmailFromAuthorName(authorName) {
+  if (!authorName) return '';
+  for (const t of _teachers) {
+    if (t.name === authorName) return t.email;
+    if ((t.aliases || []).indexOf(authorName) >= 0) return t.email;
+  }
+  return '';
 }
 
 // ── 센터 매핑 ──
@@ -1124,10 +1207,12 @@ function getCurrentScheduleId() { return parseInt(sessionStorage.getItem('cms_sc
 
 // ── 관리자 설정 ──
 // 관리자는 모든 교안을 편집/삭제할 수 있음 (작성자 무관)
-const ADMIN_EMAILS = ['rira@mjcms.com'];
+// 관리자 여부는 teachers 테이블의 is_admin 컬럼으로 결정
 function isAdmin() {
   const email = (getCurrentEmail() || '').toLowerCase();
-  return ADMIN_EMAILS.includes(email);
+  if (!email) return false;
+  const t = _teachers.find(x => x.email === email);
+  return t ? !!t.is_admin : false;
 }
 function canEdit(l) { return isMyLesson(l) || isAdmin(); }
 
@@ -3467,17 +3552,8 @@ function isMyLesson(l) {
   if (!myEmail) return false;
   // author_email이 있으면 직접 비교
   if (l.author_email) return l.author_email === myEmail;
-  // author_email 없는 구버전 교안 → 이름으로 판단
-  const AUTHOR_EMAIL_MAP = {
-    '황지향T':'rira@mjcms.com', '황지향 센터장':'rira@mjcms.com', '황지향':'rira@mjcms.com',
-    '변유진T':'byj@mjcms.com', '변유진':'byj@mjcms.com',
-    '제선영T':'jsy@mjcms.com', '제선영 T':'jsy@mjcms.com', '제선영':'jsy@mjcms.com',
-    '김경미T':'kkm@mjcms.com', '김경미 대리':'kkm@mjcms.com', '김경미':'kkm@mjcms.com',
-    '윤시현T':'ysh@mjcms.com', '윤시현':'ysh@mjcms.com',
-    '이의금T':'leg@dbcms.com', '이의금':'leg@dbcms.com',
-    '이향림T':'lhl@drcms.com', '이향림':'lhl@drcms.com'
-  };
-  const mapped = AUTHOR_EMAIL_MAP[l.author || ''];
+  // author_email 없는 구버전 교안 → 이름으로 판단 (teachers 테이블 기반)
+  const mapped = getEmailFromAuthorName(l.author || '');
   return mapped ? mapped === myEmail : false;
 }
 
