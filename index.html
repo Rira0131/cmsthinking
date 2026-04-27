@@ -1085,7 +1085,8 @@ const TEACHER_NAMES = {
   'kkm@mjcms.com': '김경미',
   'byj@mjcms.com': '변유진',
   'jsy@mjcms.com': '제선영',
-  'rira@mjcms.com': '황지향'
+  'rira@mjcms.com': '황지향',
+  'lhl@drcms.com': '이향림'
 };
 
 function getNameFromEmail(email) {
@@ -3473,7 +3474,8 @@ function isMyLesson(l) {
     '제선영T':'jsy@mjcms.com', '제선영 T':'jsy@mjcms.com', '제선영':'jsy@mjcms.com',
     '김경미T':'kkm@mjcms.com', '김경미 대리':'kkm@mjcms.com', '김경미':'kkm@mjcms.com',
     '윤시현T':'ysh@mjcms.com', '윤시현':'ysh@mjcms.com',
-    '이의금T':'leg@dbcms.com', '이의금':'leg@dbcms.com'
+    '이의금T':'leg@dbcms.com', '이의금':'leg@dbcms.com',
+    '이향림T':'lhl@drcms.com', '이향림':'lhl@drcms.com'
   };
   const mapped = AUTHOR_EMAIL_MAP[l.author || ''];
   return mapped ? mapped === myEmail : false;
