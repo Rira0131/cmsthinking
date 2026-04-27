@@ -246,10 +246,13 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .sem-week-status{font-size:13px}
 .sem-week-label{font-size:12px;color:var(--gray-700);font-weight:600}
 .sem-week-slots{display:flex;flex-direction:column;gap:4px}
-.sem-slot{font-size:11px;padding:4px 6px;background:var(--gray-50);border-radius:5px;line-height:1.3}
+.sem-slot{font-size:11px;padding:4px 6px;background:var(--gray-50);border-radius:5px;line-height:1.3;transition:background .15s}
+.sem-slot[onclick]:hover{background:#FFF0F5;box-shadow:0 0 0 1px rgba(255,107,157,0.3) inset}
 .sem-slot.empty{color:var(--gray-400);font-style:italic;text-align:center}
 .sem-slot.slot-done{background:#E8FAF0}
+.sem-slot.slot-done[onclick]:hover{background:#D6F5E2}
 .sem-slot.slot-mine{background:#FFE5EE;border-left:3px solid var(--primary)}
+.sem-slot.slot-mine[onclick]:hover{background:#FFD0E2}
 .sem-slot-teacher{font-weight:700;color:var(--primary);margin-right:4px}
 .sem-slot-theme{color:var(--gray-700)}
 
@@ -1593,7 +1596,9 @@ function renderSemesterCalendar() {
               const isMine = myNorm && slots.some(sl => normalizeName(sl.teacher) === myNorm);
               const cls = (allDone ? 'done' : someDone ? 'partial' : '') + (isMine ? ' is-mine' : '');
               const monthEsc = String(m.name).replace(/'/g, "\\'");
-              return `<div class="sem-week ${cls}" onclick="openWeekEditor('${monthEsc}', ${wi})">
+              // [수정] 주차 박스 자체의 편집 클릭은 제거 — 일정 편집은 "전체 일정 편집"에서 하고,
+              //   대시보드 캘린더의 슬롯은 "그 교안으로 점프" 용도로만 사용한다.
+              return `<div class="sem-week ${cls}">
                 <div class="sem-week-head">
                   <span class="sem-week-num">${weekCounter}주차</span>
                   <span class="sem-week-status">${allDone ? '✅' : someDone ? '◐' : '○'}</span>
@@ -1604,7 +1609,13 @@ function renderSemesterCalendar() {
                     slots.map((sl, si) => {
                       const done = slotStatuses[si];
                       const mine = myNorm && normalizeName(sl.teacher) === myNorm;
-                      return `<div class="sem-slot ${done ? 'slot-done' : ''} ${mine ? 'slot-mine' : ''}">
+                      // 테마가 있으면 클릭으로 자료실 점프, 없으면 비활성
+                      const themeRaw = sl.theme || '';
+                      const clickable = !!themeRaw;
+                      const onClick = clickable
+                        ? ` onclick="jumpToLessonFromSlot(${JSON.stringify(themeRaw).replace(/"/g, '&quot;')})" style="cursor:pointer"`
+                        : '';
+                      return `<div class="sem-slot ${done ? 'slot-done' : ''} ${mine ? 'slot-mine' : ''}"${onClick} title="${clickable ? '클릭하면 자료실에서 이 교안 찾기' : ''}">
                         <span class="sem-slot-teacher">${escHtml(sl.teacher || '?')}</span><span class="sem-slot-theme">${escHtml(sl.theme || '주제 미정')}</span>
                       </div>`;
                     }).join('')}
@@ -2117,6 +2128,16 @@ function goToLesson(query) {
   const authorFilter = document.getElementById('author-filter');
   if (authorFilter) authorFilter.value = '';
   filterLessons();
+}
+
+// [신규] 학기 캘린더 슬롯 클릭 시 호출 — 테마 코드(13-2-2)가 있으면 그것을,
+//   없으면 첫 줄 전체를 사용해 테마 필터 모드(제목 매칭)로 자료실에 점프한다.
+function jumpToLessonFromSlot(theme) {
+  if (!theme) return;
+  const m = String(theme).match(/\d+-\d+-\d+/);
+  const q = m ? m[0] : String(theme).split('\n')[0].trim();
+  if (typeof searchByTheme === 'function') searchByTheme(q);
+  else goToLesson(q);
 }
 
 function renderSchedule() {
