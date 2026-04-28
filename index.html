@@ -402,48 +402,95 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .attach-download{font-size:11px;color:var(--primary);text-decoration:none;font-weight:600;white-space:nowrap;flex-shrink:0;padding:3px 8px;border:1px solid var(--primary);border-radius:6px}
 .attach-download:hover{background:var(--primary);color:#fff}
 /* ── 슬라이드쇼 ── */
-#slideshow-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#2D1B3D 0%,#1a1035 100%);z-index:99998;display:none;flex-direction:column}
+/* === 슬라이드쇼 (발표 모드) === */
+/* CSS 변수 기반: 기본 LIGHT, .theme-dark 클래스 추가 시 다크 모드 */
+#slideshow-overlay {
+  --sl-bg: linear-gradient(160deg,#FAFAF7 0%,#F4F0E8 100%);
+  --sl-fg: #1F2937;
+  --sl-fg-soft: #374151;
+  --sl-fg-muted: #9CA3AF;
+  --sl-accent: #6366F1;
+  --sl-accent-soft: #EEF2FF;
+  --sl-card-bg: #ffffff;
+  --sl-card-border: 1px solid #E5E7EB;
+  --sl-card-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  --sl-topbar-bg: rgba(255,255,255,0.7);
+  --sl-topbar-border-bottom: 1px solid #E5E7EB;
+  --sl-btn-bg: #E5E7EB;
+  --sl-btn-bg-hover: #D1D5DB;
+  --sl-btn-fg: #1F2937;
+  --sl-tag-bg: #F3F4F6;
+  --sl-tag-fg: #6B7280;
+  --sl-progress-bg: #E5E7EB;
+  --sl-panel-bg: rgba(255,255,255,0.7);
+  --sl-panel-border-left: 1px solid #E5E7EB;
+  position:fixed;inset:0;background:var(--sl-bg);z-index:99998;display:none;flex-direction:column;
+}
+#slideshow-overlay.theme-dark {
+  --sl-bg: linear-gradient(160deg,#2D1B3D 0%,#1a1035 100%);
+  --sl-fg: #e0e7ff;
+  --sl-fg-soft: #cbd5e1;
+  --sl-fg-muted: #64748b;
+  --sl-accent: #a5b4fc;
+  --sl-accent-soft: rgba(99,102,241,0.4);
+  --sl-card-bg: rgba(255,255,255,0.06);
+  --sl-card-border: 1px solid rgba(255,255,255,0.12);
+  --sl-card-shadow: none;
+  --sl-topbar-bg: rgba(0,0,0,0.3);
+  --sl-topbar-border-bottom: none;
+  --sl-btn-bg: rgba(255,255,255,0.12);
+  --sl-btn-bg-hover: rgba(255,255,255,0.25);
+  --sl-btn-fg: #ffffff;
+  --sl-tag-bg: rgba(255,255,255,0.08);
+  --sl-tag-fg: #94a3b8;
+  --sl-progress-bg: rgba(255,255,255,0.1);
+  --sl-panel-bg: rgba(0,0,0,0.35);
+  --sl-panel-border-left: 1px solid rgba(255,255,255,0.1);
+}
 #slideshow-overlay.open{display:flex}
-.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(0,0,0,.3);flex-shrink:0}
-.slide-topbar-title{color:#c7d2fe;font-size:14px;font-weight:600;letter-spacing:.02em}
-.slide-counter{color:#a5b4fc;font-size:13px}
-.slide-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s}
-.slide-close:hover{background:rgba(255,255,255,.25)}
-.slide-book-btn{background:rgba(255,255,255,.12);border:none;color:#c7d2fe;padding:5px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s;white-space:nowrap}
-.slide-book-btn:hover,.slide-book-btn.active{background:rgba(99,102,241,.5);color:#fff}
+.slide-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--sl-topbar-bg);border-bottom:var(--sl-topbar-border-bottom);flex-shrink:0}
+.slide-topbar-title{color:var(--sl-accent);font-size:14px;font-weight:600;letter-spacing:.02em}
+.slide-counter{color:var(--sl-accent);font-size:13px}
+.slide-close{background:var(--sl-btn-bg);border:none;color:var(--sl-btn-fg);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.slide-close:hover{background:var(--sl-btn-bg-hover)}
+.slide-book-btn,.slide-theme-btn{background:var(--sl-btn-bg);border:none;color:var(--sl-accent);padding:5px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s;white-space:nowrap}
+.slide-book-btn:hover,.slide-book-btn.active,.slide-theme-btn:hover{background:#6366F1;color:#fff}
+#slideshow-overlay.theme-dark .slide-book-btn:hover,
+#slideshow-overlay.theme-dark .slide-book-btn.active,
+#slideshow-overlay.theme-dark .slide-theme-btn:hover{background:rgba(99,102,241,0.5);color:#fff}
 .slide-main-row{flex:1;display:flex;overflow:hidden;min-height:0}
 .slide-area{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 80px;overflow:hidden;position:relative;transition:flex .3s}
-#textbook-panel{width:320px;flex-shrink:0;background:rgba(0,0,0,.35);border-left:1px solid rgba(255,255,255,.1);display:none;flex-direction:column;overflow-y:auto}
+#textbook-panel{width:320px;flex-shrink:0;background:var(--sl-panel-bg);border-left:var(--sl-panel-border-left);display:none;flex-direction:column;overflow-y:auto}
 #textbook-panel.open{display:flex}
-#textbook-panel .tb-header{padding:16px 16px 10px;color:#a5b4fc;font-size:13px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+#textbook-panel .tb-header{padding:16px 16px 10px;color:var(--sl-accent);font-size:13px;font-weight:700;border-bottom:var(--sl-card-border);flex-shrink:0}
 #textbook-panel .tb-imgs{padding:14px;display:flex;flex-direction:column;gap:10px}
-#textbook-panel .tb-img-wrap{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+#textbook-panel .tb-img-wrap{border-radius:10px;overflow:hidden;border:var(--sl-card-border)}
 #textbook-panel .tb-img-wrap img{width:100%;display:block;cursor:zoom-in}
-#textbook-panel .tb-empty{padding:24px 16px;color:#64748b;font-size:13px;text-align:center}
+#textbook-panel .tb-empty{padding:24px 16px;color:var(--sl-fg-muted);font-size:13px;text-align:center}
 .slide-content{width:100%;max-width:900px;animation:slideIn .25s ease}
 @keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.slide-title-card{text-align:center;color:#fff}
-.slide-title-card h1{font-size:clamp(28px,4vw,52px);font-weight:800;color:#e0e7ff;margin-bottom:16px;line-height:1.2}
-.slide-title-card .slide-badge{display:inline-block;background:rgba(99,102,241,.4);color:#c7d2fe;padding:5px 16px;border-radius:20px;font-size:15px;margin-bottom:24px}
-.slide-title-card .slide-objectives{background:rgba(255,255,255,.08);border-radius:16px;padding:24px 32px;font-size:17px;color:#e0e7ff;line-height:1.8;text-align:left;max-width:700px;margin:0 auto}
-.slide-activity-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:36px 44px;color:#fff}
+.slide-title-card{text-align:center;color:var(--sl-fg)}
+.slide-title-card h1{font-size:clamp(28px,4vw,52px);font-weight:800;color:var(--sl-fg);margin-bottom:16px;line-height:1.2}
+.slide-title-card .slide-badge{display:inline-block;background:var(--sl-accent-soft);color:var(--sl-accent);padding:5px 16px;border-radius:20px;font-size:15px;margin-bottom:24px}
+.slide-title-card .slide-objectives{background:var(--sl-card-bg);border:var(--sl-card-border);box-shadow:var(--sl-card-shadow);border-radius:16px;padding:24px 32px;font-size:17px;color:var(--sl-fg-soft);line-height:1.8;text-align:left;max-width:700px;margin:0 auto}
+.slide-activity-card{background:var(--sl-card-bg);border:var(--sl-card-border);box-shadow:var(--sl-card-shadow);border-radius:20px;padding:36px 44px;color:var(--sl-fg)}
 .slide-act-num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;font-size:14px;font-weight:800;color:#fff;margin-bottom:16px}
-.slide-act-title{font-size:clamp(20px,3vw,32px);font-weight:800;color:#e0e7ff;margin-bottom:8px;line-height:1.3}
-.slide-act-time{display:inline-block;background:rgba(99,102,241,.35);color:#a5b4fc;padding:3px 12px;border-radius:12px;font-size:13px;margin-bottom:20px}
+.slide-act-title{font-size:clamp(20px,3vw,32px);font-weight:800;color:var(--sl-fg);margin-bottom:8px;line-height:1.3}
+.slide-act-time{display:inline-block;background:var(--sl-accent-soft);color:var(--sl-accent);padding:3px 12px;border-radius:12px;font-size:13px;margin-bottom:20px}
 .slide-act-body{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start}
-.slide-act-research{font-size:16px;color:#cbd5e1;line-height:1.85;white-space:pre-wrap}
+.slide-act-research{font-size:16px;color:var(--sl-fg-soft);line-height:1.85;white-space:pre-wrap}
 .slide-act-imgs{display:flex;flex-direction:column;gap:8px;max-width:240px}
 .slide-act-imgs img{width:100%;border-radius:10px;object-fit:cover;max-height:160px;cursor:zoom-in}
 .slide-act-extras{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
-.slide-extra-tag{background:rgba(255,255,255,.08);border-radius:8px;padding:5px 12px;font-size:13px;color:#94a3b8}
+.slide-extra-tag{background:var(--sl-tag-bg);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--sl-tag-fg)}
 .slide-nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 24px;flex-shrink:0}
-.slide-nav-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.slide-nav-btn:hover:not(:disabled){background:rgba(255,255,255,.25);transform:scale(1.08)}
+.slide-nav-btn{background:var(--sl-btn-bg);border:none;color:var(--sl-btn-fg);width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.slide-nav-btn:hover:not(:disabled){background:var(--sl-btn-bg-hover);transform:scale(1.08)}
 .slide-nav-btn:disabled{opacity:.3;cursor:default}
 .slide-dots{display:flex;gap:6px;align-items:center}
-.slide-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:all .2s}
-.slide-dot.active{background:#818cf8;width:22px;border-radius:4px}
-.slide-progress{height:3px;background:rgba(255,255,255,.1);flex-shrink:0}
+.slide-dot{width:7px;height:7px;border-radius:50%;background:var(--sl-progress-bg);cursor:pointer;transition:all .2s}
+.slide-dot.active{background:var(--sl-accent);width:22px;border-radius:4px}
+.slide-progress{height:3px;background:var(--sl-progress-bg);flex-shrink:0}
 .slide-progress-bar{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width .3s ease}
 .view-img-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .view-img-thumb{width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200);flex-shrink:0;cursor:zoom-in}
@@ -856,6 +903,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
   <div class="slide-topbar">
     <div class="slide-topbar-title" id="slide-lesson-title"></div>
     <div style="display:flex;align-items:center;gap:12px">
+      <button class="slide-theme-btn" id="slide-theme-btn" onclick="toggleSlideshowTheme()" title="라이트/다크 전환">🌙 다크</button>
       <button class="slide-book-btn" id="slide-book-btn" onclick="toggleTextbookPanel()" title="교재 이미지 패널" style="display:none">📖 교재</button>
       <div class="slide-counter" id="slide-counter"></div>
       <button class="slide-close" onclick="closeSlideshow()" title="닫기 (ESC)">✕</button>
@@ -3333,12 +3381,35 @@ function startSlideshow(lessonId) {
   document.getElementById('slide-lesson-title').textContent = l.title;
   _slideIdx = 0;
   renderSlide();
+  // [신규] 마지막에 사용한 테마(라이트/다크) 복원. 기본값은 라이트.
+  applySlideshowTheme(localStorage.getItem('cms_slide_theme') || 'light');
   document.getElementById('slideshow-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
   // 전체화면 시도
   const el = document.getElementById('slideshow-overlay');
   if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+}
+
+function applySlideshowTheme(theme) {
+  const overlay = document.getElementById('slideshow-overlay');
+  const btn = document.getElementById('slide-theme-btn');
+  if (!overlay) return;
+  if (theme === 'dark') {
+    overlay.classList.add('theme-dark');
+    if (btn) btn.textContent = '☀️ 라이트';
+  } else {
+    overlay.classList.remove('theme-dark');
+    if (btn) btn.textContent = '🌙 다크';
+  }
+}
+
+function toggleSlideshowTheme() {
+  const overlay = document.getElementById('slideshow-overlay');
+  const isDark = overlay.classList.contains('theme-dark');
+  const next = isDark ? 'light' : 'dark';
+  applySlideshowTheme(next);
+  localStorage.setItem('cms_slide_theme', next);
 }
 
 function toggleTextbookPanel() {
