@@ -2490,6 +2490,7 @@ function filterLessons() {
           ${l.curriculum ? `<div class="info-row"><span class="info-label">📘 교과 연계</span><span class="info-value">${l.curriculum}</span></div>` : ''}
           ${l.cms_link ? `<div class="info-row"><span class="info-label">🔗 CMS 연계</span><span class="info-value">${l.cms_link}</span></div>` : ''}
           ${l.notes ? `<div class="info-row"><span class="info-label">📝 비고</span><span class="info-value">${l.notes}</span></div>` : ''}
+          ${(l.textbook_images && l.textbook_images.length > 0) ? `<div class="info-row"><span class="info-label">📖 교재 이미지</span><span class="info-value" style="display:flex;flex-wrap:wrap;gap:6px">${l.textbook_images.map(src => `<div class="view-img-thumb"><img src="${src}" onclick="openLightbox(this.src)" title="클릭하면 크게"></div>`).join('')}</span></div>` : ''}
           ${(l.links && l.links.length > 0) ? `<div class="info-row"><span class="info-label">🔗 참고 링크</span><span class="info-value" style="display:flex;flex-direction:column;gap:4px">${l.links.map(lk => `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:underline;font-size:13px;word-break:break-all">${lk.label || lk.url}</a>`).join('')}</span></div>` : ''}
           ${(l.attachments && l.attachments.length > 0) ? `<div class="info-row"><span class="info-label">📎 첨부파일</span><span class="info-value" style="display:flex;flex-direction:column;gap:6px;width:100%">${l.attachments.map(att => `<div class="attach-item"><span class="attach-icon">${getFileIcon(att.name)}</span><div class="attach-info"><div class="attach-name">${escHtml(att.name)}</div><div class="attach-size">${formatFileSize(att.size)}</div></div><a class="attach-download" href="${att.url}" target="_blank" download="${escHtml(att.name)}">⬇️ 다운로드</a></div>`).join('')}</span></div>` : ''}
           ${realActivities.length > 0 ? `
@@ -4193,6 +4194,13 @@ function printLesson(idx) {
   </div>
 
   ${infoHtml ? `<table class="info-table">${infoHtml}</table>` : ''}
+
+  ${(l.textbook_images && l.textbook_images.length > 0) ? `
+    <div class="section-title">📖 교재 이미지 (${l.textbook_images.length}장)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;page-break-inside:avoid">
+      ${l.textbook_images.map(src => `<img src="${src}" style="max-width:240px;max-height:180px;border-radius:4px;border:1px solid #E5E7EB;object-fit:contain">`).join('')}
+    </div>
+  ` : ''}
 
   ${realActivities.length > 0 ? `
     <div class="section-title">활동 연구 (${realActivities.length}개)</div>
