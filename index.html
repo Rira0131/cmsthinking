@@ -495,6 +495,17 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-dot.active{background:var(--sl-accent);width:22px;border-radius:4px}
 .slide-progress{height:3px;background:var(--sl-progress-bg);flex-shrink:0}
 .slide-progress-bar{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width .3s ease}
+/* 발표 중 영상 모달 (유튜브 임베드) */
+#slide-video-modal{position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:none;align-items:center;justify-content:center;padding:32px}
+#slide-video-modal.open{display:flex}
+.slide-video-frame{width:100%;max-width:1200px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);position:relative;background:#000}
+.slide-video-frame iframe{width:100%;height:100%;border:0}
+.slide-video-close{position:absolute;top:-44px;right:0;background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.slide-video-close:hover{background:rgba(255,255,255,0.3)}
+.slide-video-hint{position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.6);font-size:12px;white-space:nowrap}
+/* 활동 카드 안의 "다음 키 누르면 영상 재생됨" 힌트 */
+.slide-video-prompt{margin-top:14px;padding:10px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;animation:videoPulse 2s ease-in-out infinite}
+@keyframes videoPulse{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,0.5)}50%{box-shadow:0 0 0 8px rgba(99,102,241,0)}}
 .view-img-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .view-img-thumb{width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200);flex-shrink:0;cursor:zoom-in}
 .view-img-thumb img{width:100%;height:100%;object-fit:cover}
@@ -903,6 +914,16 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 <!-- 슬라이드쇼 오버레이 -->
 <div id="slideshow-overlay">
   <div class="slide-progress"><div class="slide-progress-bar" id="slide-progress-bar"></div></div>
+  <!-- 포인터 호환성 진단용. 평소엔 안 보이고, Shift+D 로 토글하면 키 입력을 1.8초간 표시 -->
+  <div id="slide-key-debug" style="position:fixed;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;font-family:monospace;z-index:99999;opacity:0;transition:opacity .2s;pointer-events:none"></div>
+  <!-- 영상 인라인 모달 (유튜브 임베드 등) -->
+  <div id="slide-video-modal" onclick="if(event.target.id==='slide-video-modal')closeSlideVideo()">
+    <div class="slide-video-frame">
+      <button class="slide-video-close" onclick="closeSlideVideo()" title="닫기 (ESC)">✕</button>
+      <iframe id="slide-video-iframe" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      <div class="slide-video-hint">다음 키 또는 ESC로 닫기 · 닫으면 자동으로 다음 슬라이드로 이동</div>
+    </div>
+  </div>
   <div class="slide-topbar">
     <div class="slide-topbar-title" id="slide-lesson-title"></div>
     <div style="display:flex;align-items:center;gap:12px">
@@ -2556,6 +2577,7 @@ function filterLessons() {
                   ${a.workbook ? `<div class="activity-workbook">📖 워크북 연계: ${highlightText(a.workbook, query)}</div>` : ''}
                   ${a.research ? `<div class="activity-research">${researchToDisplayHtml(a.research, query)}</div>` : ''}
                   ${a.materials ? `<div class="activity-materials">🧩 준비물: ${a.materials}</div>` : ''}
+                  ${(a.links && a.links.length > 0) ? `<div class="activity-links" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--gray-200)"><div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:2px">🔗 참고 링크</div>${a.links.map(lk => `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:underline;font-size:13px;word-break:break-all">${escHtml(lk.label || lk.url)}</a>`).join('')}</div>` : ''}
                   ${a.images && a.images.length > 0 ? '<div class="view-img-grid">' + a.images.map(src => '<div class="view-img-thumb"><img src="' + src + '" onclick="openLightbox(this.src)" title="클릭"></div>').join('') + '</div>' : ''}
                 </div>
               `).join('')}
@@ -2819,7 +2841,7 @@ function buildResearchToolbarHtml() {
 }
 
 let activityCount = 0;
-function addActivityEditor(name='', research='', materials='', time='', workbook='', images=[]) {
+function addActivityEditor(name='', research='', materials='', time='', workbook='', images=[], links=[]) {
   activityCount++;
   const id = activityCount;
   const container = document.getElementById('ed-activities');
@@ -2858,8 +2880,19 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
       </div>
       <div class="img-grid" id="img-grid-${id}"></div>
     </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px">🔗 참고 링크 <span style="font-weight:400;font-size:11px;color:var(--gray-500)">(이 활동에만 적용)</span>
+        <button type="button" class="btn btn-sm" onclick="addActLinkRow(this)" style="padding:3px 10px;font-size:12px;margin-left:auto">+ 추가</button>
+      </label>
+      <div class="act-links" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
   `;
   container.appendChild(div);
+  // 기존 링크 채우기
+  if (links && links.length > 0) {
+    const linksContainer = div.querySelector('.act-links');
+    links.forEach(lk => _appendActLinkRow(linksContainer, lk.label || '', lk.url || ''));
+  }
   // 활동 연구 contenteditable 초기 콘텐츠 주입 (구버전 평문/신버전 HTML 모두 대응)
   const researchEditor = div.querySelector('.act-research');
   if (researchEditor) {
@@ -3386,12 +3419,17 @@ function startSlideshow(lessonId) {
   renderSlide();
   // [신규] 마지막에 사용한 테마(라이트/다크) 복원. 기본값은 라이트.
   applySlideshowTheme(localStorage.getItem('cms_slide_theme') || 'light');
-  document.getElementById('slideshow-overlay').classList.add('open');
+  const ov = document.getElementById('slideshow-overlay');
+  ov.classList.add('open');
   document.body.style.overflow = 'hidden';
 
+  // [신규] 키 이벤트 수신을 위해 오버레이에 포커스 부여
+  // 무선 프레젠터의 키 입력이 풀스크린/포커스 위치에 따라 누락되는 것을 방지
+  ov.setAttribute('tabindex', '-1');
+  setTimeout(() => ov.focus(), 60);
+
   // 전체화면 시도
-  const el = document.getElementById('slideshow-overlay');
-  if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  if (ov.requestFullscreen) ov.requestFullscreen().catch(() => {});
 }
 
 function applySlideshowTheme(theme) {
@@ -3429,6 +3467,8 @@ function toggleTextbookPanel() {
 }
 
 function closeSlideshow() {
+  closeSlideVideo();
+  _videoSeenSlides.clear();
   document.getElementById('slideshow-overlay').classList.remove('open');
   document.getElementById('textbook-panel').classList.remove('open');
   document.getElementById('slide-book-btn').classList.remove('active');
@@ -3437,7 +3477,74 @@ function closeSlideshow() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
 
+// ── 발표 중 영상 인라인 재생 (구상 2) ──
+// 흐름: 활동 카드 도착 → 포인터 한 번 더 → 영상 모달 → 포인터 한 번 더 → 다음 슬라이드
+const _videoSeenSlides = new Set();    // 이번 슬라이드의 영상을 이미 봤는지 기록
+let _videoModalOpen = false;
+
+// 유튜브/Vimeo URL → 임베드 URL. 변환 불가능한 URL은 null 반환.
+function _videoEmbedUrl(url) {
+  if (!url) return null;
+  const ytMatch = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,15})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+  const vmMatch = String(url).match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}?autoplay=1`;
+  return null;
+}
+
+// 현재 슬라이드의 첫 임베드 가능한 링크를 가져옴
+function _firstEmbeddableLinkOnCurrentSlide() {
+  const s = _slides[_slideIdx];
+  if (!s || s.type !== 'activity') return null;
+  const links = (s.act && s.act.links) || [];
+  for (const lk of links) {
+    const embed = _videoEmbedUrl(lk.url);
+    if (embed) return embed;
+  }
+  return null;
+}
+
+function openSlideVideo(embedUrl) {
+  const modal = document.getElementById('slide-video-modal');
+  const iframe = document.getElementById('slide-video-iframe');
+  if (!modal || !iframe) return;
+  iframe.src = embedUrl;
+  modal.classList.add('open');
+  _videoModalOpen = true;
+}
+
+function closeSlideVideo() {
+  const modal = document.getElementById('slide-video-modal');
+  const iframe = document.getElementById('slide-video-iframe');
+  if (!modal || !iframe) return;
+  iframe.src = '';   // 영상 즉시 정지
+  modal.classList.remove('open');
+  _videoModalOpen = false;
+}
+
 function slideMove(dir) {
+  // 다음 키 동작
+  if (dir === 1) {
+    // (1) 영상 모달이 열려 있으면 → 닫고 다음 슬라이드로 (한 번에 두 동작)
+    if (_videoModalOpen) {
+      closeSlideVideo();
+      _videoSeenSlides.add(_slideIdx);
+      // 그대로 다음 슬라이드 진행 로직으로 흘러감
+    }
+    // (2) 현재 슬라이드에 임베드 가능한 영상이 있고 아직 안 봤으면 → 영상 열기 (다음으로 안 감)
+    else {
+      const embed = _firstEmbeddableLinkOnCurrentSlide();
+      if (embed && !_videoSeenSlides.has(_slideIdx)) {
+        openSlideVideo(embed);
+        return;
+      }
+    }
+  }
+  // 이전 키: 영상 모달 열려 있으면 닫기만 (슬라이드 이동 없음)
+  if (dir === -1 && _videoModalOpen) {
+    closeSlideVideo();
+    return;
+  }
   const next = _slideIdx + dir;
   if (next < 0 || next >= _slides.length) return;
   _slideIdx = next;
@@ -3487,6 +3594,21 @@ function renderSlide() {
               ${a.workbook ? `<span class="slide-extra-tag">📖 워크북: ${escHtml(a.workbook)}</span>` : ''}
               ${a.materials ? `<span class="slide-extra-tag">🧩 준비물: ${escHtml(a.materials)}</span>` : ''}
             </div>
+            ${(() => {
+              const links = a.links || [];
+              if (links.length === 0) return '';
+              const embeddable = links.find(lk => _videoEmbedUrl(lk.url));
+              const others = links.filter(lk => !_videoEmbedUrl(lk.url));
+              let html = '<div style="margin-top:14px;display:flex;flex-direction:column;gap:6px">';
+              if (embeddable) {
+                html += `<div class="slide-video-prompt">▶️ 다음 키를 누르면 영상이 재생됩니다 <span style="opacity:.85;font-weight:400">— ${escHtml(embeddable.label || '영상')}</span></div>`;
+              }
+              others.forEach(lk => {
+                html += `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--sl-accent);text-decoration:underline;font-size:14px;word-break:break-all">🔗 ${escHtml(lk.label || lk.url)}</a>`;
+              });
+              html += '</div>';
+              return html;
+            })()}
           </div>
           ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
         </div>
@@ -3504,24 +3626,59 @@ function jumpSlide(idx) {
 
 // 키보드/리모컨 네비게이션
 // 대부분의 무선 프레젠터(로지텍 R400/R500 등)는 화살표 또는 PageUp/PageDown를 보낸다.
-// 양쪽 모두 처리해서 어떤 포인터를 써도 동작하도록 한다.
-document.addEventListener('keydown', e => {
+// 일부 모델은 Tab/F5/Period 같은 다른 키를 보내기도 해서, 폭넓게 받는다.
+// 또한 전체화면 모드에서 이벤트 누락을 방지하기 위해 window/document/overlay 세 곳 모두에 등록.
+function _handleSlideshowKey(e) {
+  // [수정] 같은 이벤트 객체에 플래그를 달아 중복 호출 방지.
+  //   리스너를 window/document/overlay 3곳에 등록해 두었기 때문에 그대로 두면
+  //   한 번 누를 때마다 3번 넘어가버린다. 첫 핸들러가 처리하면 나머지는 스킵.
+  if (e._slideHandled) return;
+  e._slideHandled = true;
   const overlay = document.getElementById('slideshow-overlay');
-  if (!overlay.classList.contains('open')) return;
-  // 다음
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' ||
-      e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
-    e.preventDefault(); slideMove(1);
+  if (!overlay || !overlay.classList.contains('open')) return;
+  // 디버그: 어떤 키가 들어왔는지 화면 우상단에 잠깐 표시 (포인터 호환성 진단용)
+  if (window._slideKeyDebug) {
+    const dbg = document.getElementById('slide-key-debug');
+    if (dbg) {
+      dbg.textContent = `key="${e.key}" code="${e.code}" keyCode=${e.keyCode}`;
+      dbg.style.opacity = '1';
+      clearTimeout(window._slideKeyDebugTimer);
+      window._slideKeyDebugTimer = setTimeout(() => { dbg.style.opacity = '0'; }, 1800);
+    }
   }
-  // 이전
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Backspace') {
-    e.preventDefault(); slideMove(-1);
+  const k = e.key;
+  // 다음 (포인터 forward 버튼이 보낼 가능성이 있는 모든 키)
+  const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown','Enter','Tab','MediaTrackNext','N','n'];
+  // 이전 (포인터 back 버튼)
+  const prevKeys = ['ArrowLeft','ArrowUp','PageUp','Backspace','MediaTrackPrevious','P','p'];
+  if (nextKeys.indexOf(k) >= 0) { e.preventDefault(); slideMove(1); return; }
+  if (prevKeys.indexOf(k) >= 0) { e.preventDefault(); slideMove(-1); return; }
+  if (k === 'Home') { e.preventDefault(); _slideIdx = 0; renderSlide(); return; }
+  if (k === 'End')  { e.preventDefault(); _slideIdx = _slides.length - 1; renderSlide(); return; }
+  if (k === 'Escape' || k === 'F5') {
+    // 영상 모달이 열려 있으면 그것부터 닫기 — 슬라이드쇼는 유지
+    if (_videoModalOpen) { e.preventDefault(); closeSlideVideo(); return; }
+    closeSlideshow();
+    return;
   }
-  // 처음 / 끝 (선택적 — 일부 포인터의 시작/종료 버튼)
-  if (e.key === 'Home') { e.preventDefault(); _slideIdx = 0; renderSlide(); }
-  if (e.key === 'End')  { e.preventDefault(); _slideIdx = _slides.length - 1; renderSlide(); }
-  // 종료
-  if (e.key === 'Escape') closeSlideshow();
+}
+// 세 군데 모두에 등록 — 풀스크린/포커스 이슈로 한쪽이 누락돼도 다른 쪽이 받음.
+window.addEventListener('keydown', _handleSlideshowKey, true);    // capture
+document.addEventListener('keydown', _handleSlideshowKey);
+document.getElementById('slideshow-overlay').addEventListener('keydown', _handleSlideshowKey);
+
+// 디버그 모드 토글: 콘솔에서 toggleSlideKeyDebug() 또는 발표 모드 중 Shift+D
+window.toggleSlideKeyDebug = function() {
+  window._slideKeyDebug = !window._slideKeyDebug;
+  console.log('Slide key debug:', window._slideKeyDebug);
+};
+document.addEventListener('keydown', e => {
+  if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+    const overlay = document.getElementById('slideshow-overlay');
+    if (overlay && overlay.classList.contains('open')) {
+      window.toggleSlideKeyDebug();
+    }
+  }
 });
 
 function openLightbox(src) {
@@ -3581,6 +3738,27 @@ function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// 활동 에디터의 + 추가 버튼 → 그 활동의 act-links 안에 한 행 추가
+function addActLinkRow(btn) {
+  const editor = btn.closest('.activity-editor');
+  if (!editor) return;
+  const container = editor.querySelector('.act-links');
+  if (!container) return;
+  _appendActLinkRow(container, '', '');
+}
+// 활동 링크 한 행 만들기 (재사용 헬퍼)
+function _appendActLinkRow(container, label, url) {
+  const row = document.createElement('div');
+  row.className = 'act-link-row';
+  row.style.cssText = 'display:flex;gap:8px;align-items:center';
+  row.innerHTML = `
+    <input type="text" class="form-input link-label" placeholder="링크 제목 (선택, 예: 유튜브 영상)" value="${escHtml(label)}" style="flex:1;min-width:0">
+    <input type="url" class="form-input link-url" placeholder="https://" value="${escHtml(url)}" style="flex:2;min-width:0">
+    <button type="button" onclick="this.parentElement.remove()" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:20px;padding:0 4px;line-height:1" title="삭제">×</button>
+  `;
+  container.appendChild(row);
+}
+
 function addLinkRow(label='', url='') {
   const container = document.getElementById('ed-links');
   const row = document.createElement('div');
@@ -3618,13 +3796,19 @@ async function saveLesson() {
           researchVal = (researchEl.value || '').trim();
         }
       }
+      // 활동별 참고 링크 (유튜브 등) — 빈 URL 행은 제외
+      const actLinks = Array.from(ae.querySelectorAll('.act-link-row')).map(row => ({
+        label: row.querySelector('.link-label').value.trim(),
+        url: row.querySelector('.link-url').value.trim()
+      })).filter(l => l.url);
       activities.push({
         name,
         research: researchVal,
         materials: ae.querySelector('.act-materials').value.trim(),
         time: ae.querySelector('.act-time').value.trim(),
         workbook: ae.querySelector('.act-workbook') ? ae.querySelector('.act-workbook').value.trim() : '',
-        images
+        images,
+        links: actLinks
       });
     }
   });
@@ -3731,7 +3915,7 @@ function loadLessonToEditor(id, isCustom) {
   (l.attachments || []).forEach(att => addAttachmentRow(att.name, att.url, att.size));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
-  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
+  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
 
   // 아코디언: 내용 있는 섹션 자동 열기
@@ -3781,7 +3965,7 @@ function editCustomLesson(id) {
   (l.attachments || []).forEach(att => addAttachmentRow(att.name, att.url, att.size));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
-  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[]));
+  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[]));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
 
   // 아코디언: 내용 있는 섹션 자동 열기
@@ -4134,6 +4318,7 @@ function printLesson(idx) {
         ${a.workbook ? `<div class="act-workbook">📖 워크북 연계: ${a.workbook}</div>` : ''}
         ${a.research ? `<div class="act-research">${researchToDisplayHtml(a.research)}</div>` : ''}
         ${a.materials ? `<div class="act-materials">🧩 준비물: ${a.materials}</div>` : ''}
+        ${(a.links && a.links.length > 0) ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #E5E7EB"><div style="font-size:9pt;font-weight:700;color:#4F46E5;margin-bottom:3px">🔗 참고 링크</div>${a.links.map(lk => `<div style="font-size:9pt"><a href="${lk.url}" target="_blank" style="color:#4F46E5;text-decoration:underline;word-break:break-all">${(lk.label||lk.url)}</a></div>`).join('')}</div>` : ''}
         ${a.images && a.images.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${a.images.map(src => `<img src="${src}" style="max-width:200px;max-height:150px;border-radius:4px;border:1px solid #E5E7EB;object-fit:contain">`).join('')}</div>` : ''}
       </div>
     </div>`).join('');
