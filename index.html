@@ -481,6 +481,9 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-act-research{font-size:16px;color:var(--sl-fg-soft);line-height:1.85;white-space:pre-wrap}
 .slide-act-imgs{display:flex;flex-direction:column;gap:8px;max-width:240px}
 .slide-act-imgs img{width:100%;border-radius:10px;object-fit:cover;max-height:160px;cursor:zoom-in}
+/* 이미지가 4장 이상이면 2열 그리드로 전환 — 세로로 너무 길어지지 않도록 */
+.slide-act-imgs.multi{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:280px}
+.slide-act-imgs.multi img{max-height:110px}
 .slide-act-extras{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
 .slide-extra-tag{background:var(--sl-tag-bg);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--sl-tag-fg)}
 .slide-nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 24px;flex-shrink:0}
@@ -3485,7 +3488,7 @@ function renderSlide() {
               ${a.materials ? `<span class="slide-extra-tag">🧩 준비물: ${escHtml(a.materials)}</span>` : ''}
             </div>
           </div>
-          ${hasImgs ? `<div class="slide-act-imgs">${a.images.slice(0, 3).map(src => `<img src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
+          ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
         </div>
       </div>`;
   }
@@ -3499,12 +3502,25 @@ function jumpSlide(idx) {
   renderSlide();
 }
 
-// 키보드 네비게이션
+// 키보드/리모컨 네비게이션
+// 대부분의 무선 프레젠터(로지텍 R400/R500 등)는 화살표 또는 PageUp/PageDown를 보낸다.
+// 양쪽 모두 처리해서 어떤 포인터를 써도 동작하도록 한다.
 document.addEventListener('keydown', e => {
   const overlay = document.getElementById('slideshow-overlay');
   if (!overlay.classList.contains('open')) return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); slideMove(1); }
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); slideMove(-1); }
+  // 다음
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' ||
+      e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
+    e.preventDefault(); slideMove(1);
+  }
+  // 이전
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Backspace') {
+    e.preventDefault(); slideMove(-1);
+  }
+  // 처음 / 끝 (선택적 — 일부 포인터의 시작/종료 버튼)
+  if (e.key === 'Home') { e.preventDefault(); _slideIdx = 0; renderSlide(); }
+  if (e.key === 'End')  { e.preventDefault(); _slideIdx = _slides.length - 1; renderSlide(); }
+  // 종료
   if (e.key === 'Escape') closeSlideshow();
 });
 
