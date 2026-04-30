@@ -380,9 +380,13 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .img-upload-zone.active-target{border-style:solid;border-color:var(--primary);background:var(--primary-bg);color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
 .img-upload-zone.paste-flash{border-color:var(--green);background:var(--green-bg);color:var(--green)}
 .img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.img-thumb{position:relative;width:96px;height:96px;border-radius:8px;overflow:hidden;border:1px solid var(--gray-200);background:#f3f4f6;flex-shrink:0}
+.img-thumb{position:relative;width:96px;height:96px;border-radius:8px;overflow:hidden;border:1px solid var(--gray-200);background:#f3f4f6;flex-shrink:0;transition:opacity .15s,transform .15s,outline-offset .15s}
+.img-thumb[draggable="true"]{cursor:grab}
+.img-thumb[draggable="true"]:active{cursor:grabbing}
+.img-thumb.dragging{opacity:.4;transform:scale(0.95)}
+.img-thumb.drag-over{outline:3px solid var(--primary);outline-offset:2px}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
-.img-thumb-del{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(220,38,38,.88);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:13px;line-height:20px;text-align:center;padding:0;font-weight:700}
+.img-thumb-del{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(220,38,38,.88);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:13px;line-height:20px;text-align:center;padding:0;font-weight:700;z-index:1}
 .img-thumb-del:hover{background:#B91C1C}
 #img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:none;align-items:center;justify-content:center;cursor:zoom-out}
 #img-lightbox.open{display:flex}
@@ -3208,6 +3212,47 @@ function addImgPreview(actId, url) {
   div.appendChild(img);
   div.appendChild(delBtn);
   grid.appendChild(div);
+  _attachThumbDragEvents(div);
+}
+
+// ── 이미지 썸네일 드래그 순서 변경 (활동 이미지 + 교재 이미지 공용) ──
+let _draggedThumb = null;
+function _attachThumbDragEvents(thumb) {
+  thumb.setAttribute('draggable', 'true');
+  thumb.addEventListener('dragstart', (e) => {
+    _draggedThumb = thumb;
+    thumb.classList.add('dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', thumb.dataset.src || 'thumb'); } catch(_) {}
+    }
+  });
+  thumb.addEventListener('dragend', () => {
+    thumb.classList.remove('dragging');
+    document.querySelectorAll('.img-thumb.drag-over').forEach(el => el.classList.remove('drag-over'));
+    _draggedThumb = null;
+  });
+  thumb.addEventListener('dragover', (e) => {
+    if (!_draggedThumb || _draggedThumb === thumb) return;
+    // 같은 그리드 안에서만 순서 변경 허용 (교재 ↔ 활동 이미지 섞이지 않게)
+    if (_draggedThumb.parentNode !== thumb.parentNode) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    thumb.classList.add('drag-over');
+  });
+  thumb.addEventListener('dragleave', () => {
+    thumb.classList.remove('drag-over');
+  });
+  thumb.addEventListener('drop', (e) => {
+    if (!_draggedThumb || _draggedThumb === thumb) return;
+    if (_draggedThumb.parentNode !== thumb.parentNode) return;
+    e.preventDefault();
+    const rect = thumb.getBoundingClientRect();
+    const before = (e.clientX - rect.left) < rect.width / 2;
+    if (before) thumb.parentNode.insertBefore(_draggedThumb, thumb);
+    else thumb.parentNode.insertBefore(_draggedThumb, thumb.nextElementSibling);
+    thumb.classList.remove('drag-over');
+  });
 }
 // ── 첨부파일 ──
 const MAX_ATTACH_SIZE = 20 * 1024 * 1024; // 20MB
@@ -3406,6 +3451,7 @@ function addTextbookImgPreview(url) {
   div.appendChild(img);
   div.appendChild(delBtn);
   grid.appendChild(div);
+  _attachThumbDragEvents(div);
   updateTextbookHint();
 }
 
@@ -3776,7 +3822,9 @@ function renderSlide() {
               const others = links.filter(lk => !_videoEmbedUrl(lk.url));
               let html = '<div style="margin-top:14px;display:flex;flex-direction:column;gap:6px">';
               if (embeddable) {
-                html += `<div class="slide-video-prompt">▶️ 다음 키를 누르면 영상이 재생됩니다 <span style="opacity:.85;font-weight:400">— ${escHtml(embeddable.label || '영상')}</span></div>`;
+                // 클릭으로도 영상을 즉시 재생할 수 있게 onclick 부여
+                const embedUrl = _videoEmbedUrl(embeddable.url);
+                html += `<div class="slide-video-prompt" onclick="openSlideVideo(${JSON.stringify(embedUrl).replace(/"/g, '&quot;')})" style="cursor:pointer">▶️ 클릭 또는 → / Space 키 → 영상 재생 <span style="opacity:.85;font-weight:400">(${escHtml(embeddable.label || '영상')})</span></div>`;
               }
               others.forEach(lk => {
                 html += `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--sl-accent);text-decoration:underline;font-size:14px;word-break:break-all">🔗 ${escHtml(lk.label || lk.url)}</a>`;
