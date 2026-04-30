@@ -163,8 +163,18 @@ a{color:var(--primary);text-decoration:none}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-group{display:flex;gap:8px;margin-top:16px}
 
-.activity-editor{background:var(--gray-50);border-radius:8px;padding:16px;margin-bottom:12px;border:1px solid var(--gray-200)}
-.activity-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.activity-editor{background:var(--gray-50);border-radius:8px;padding:16px;margin-bottom:12px;border:1px solid var(--gray-200);transition:opacity .15s,box-shadow .15s,border-color .15s}
+.activity-editor.dragging{opacity:.45;box-shadow:0 6px 24px rgba(0,0,0,0.18)}
+.activity-editor.drag-over-top{border-top:3px solid var(--primary);padding-top:13px}
+.activity-editor.drag-over-bottom{border-bottom:3px solid var(--primary);padding-bottom:13px}
+.activity-editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.activity-drag-handle{cursor:grab;user-select:none;color:var(--gray-400);font-size:18px;padding:0 4px;line-height:1;flex-shrink:0}
+.activity-drag-handle:hover{color:var(--primary)}
+.activity-drag-handle:active{cursor:grabbing}
+.activity-controls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.activity-move-btn{background:white;border:1px solid var(--gray-300);color:var(--gray-600);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.activity-move-btn:hover:not(:disabled){background:var(--primary);color:white;border-color:var(--primary)}
+.activity-move-btn:disabled{opacity:.35;cursor:not-allowed}
 .add-btn{display:flex;align-items:center;gap:6px;color:var(--primary);cursor:pointer;font-size:13px;font-weight:600;padding:8px 0}
 .add-btn:hover{color:#4338CA}
 
@@ -2852,8 +2862,15 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
   div.id = 'act-' + id;
   div.innerHTML = `
     <div class="activity-editor-header">
-      <span class="activity-num" style="font-weight:600;font-size:13px">활동 ${id}</span>
-      <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();if(_activeActId==='${id}')_activeActId=null;renumberActivities();updateTimeBar()">삭제</button>
+      <span class="activity-drag-handle" title="드래그해서 순서 변경"
+            onmousedown="this.closest('.activity-editor').setAttribute('draggable','true')"
+            onmouseup="this.closest('.activity-editor').setAttribute('draggable','false')">☰</span>
+      <span class="activity-num" style="font-weight:600;font-size:13px;flex:1">활동 ${id}</span>
+      <div class="activity-controls">
+        <button class="activity-move-btn" type="button" title="위로 이동" onclick="moveActivityBy(this,-1)">↑</button>
+        <button class="activity-move-btn" type="button" title="아래로 이동" onclick="moveActivityBy(this,1)">↓</button>
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('act-${id}').remove();if(_activeActId==='${id}')_activeActId=null;renumberActivities();updateTimeBar();updateMoveButtons()">삭제</button>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">활동명</label><input type="text" class="form-input act-name" value="${escHtml(name)}"></div>
@@ -2890,6 +2907,8 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
     </div>
   `;
   container.appendChild(div);
+  // [신규] 드래그 이벤트 등록 — 헤더 핸들 mousedown 시 draggable=true 설정 후 동작
+  _attachActivityDragEvents(div);
   // 기존 링크 채우기
   if (links && links.length > 0) {
     const linksContainer = div.querySelector('.act-links');
@@ -2926,6 +2945,76 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
 function renumberActivities() {
   document.querySelectorAll('.activity-editor .activity-num').forEach((span, idx) => {
     span.textContent = '활동 ' + (idx + 1);
+  });
+  updateMoveButtons();
+}
+
+// 위/아래 이동 버튼의 활성/비활성 상태 갱신 (첫 활동은 ↑ 비활성, 마지막은 ↓ 비활성)
+function updateMoveButtons() {
+  const editors = Array.from(document.querySelectorAll('#ed-activities .activity-editor'));
+  editors.forEach((editor, i) => {
+    const btns = editor.querySelectorAll('.activity-move-btn');
+    if (btns.length >= 2) {
+      btns[0].disabled = (i === 0);
+      btns[1].disabled = (i === editors.length - 1);
+    }
+  });
+}
+
+// ↑/↓ 버튼: 클릭한 버튼이 속한 활동을 한 칸 위/아래로 이동
+function moveActivityBy(btn, dir) {
+  const editor = btn.closest('.activity-editor');
+  if (!editor) return;
+  const sibling = dir < 0 ? editor.previousElementSibling : editor.nextElementSibling;
+  if (!sibling || !sibling.classList.contains('activity-editor')) return;
+  if (dir < 0) editor.parentNode.insertBefore(editor, sibling);
+  else editor.parentNode.insertBefore(sibling, editor);
+  renumberActivities();
+  updateTimeBar();
+}
+
+// 드래그 앤 드롭: 헤더 핸들 mousedown으로 draggable이 켜진 .activity-editor를 끌어
+//   원하는 위치로 옮긴다. 드롭 위치는 마우스 Y가 대상 활동의 절반 위/아래 어느 쪽인지로 결정.
+let _draggedActivity = null;
+function _attachActivityDragEvents(editor) {
+  editor.addEventListener('dragstart', (e) => {
+    _draggedActivity = editor;
+    editor.classList.add('dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      // Firefox 호환: dataTransfer에 뭔가를 세팅해야 드래그가 시작됨
+      try { e.dataTransfer.setData('text/plain', editor.id || 'activity'); } catch(_) {}
+    }
+  });
+  editor.addEventListener('dragend', () => {
+    editor.classList.remove('dragging');
+    document.querySelectorAll('.activity-editor.drag-over-top, .activity-editor.drag-over-bottom')
+      .forEach(el => el.classList.remove('drag-over-top','drag-over-bottom'));
+    editor.setAttribute('draggable', 'false');
+    _draggedActivity = null;
+  });
+  editor.addEventListener('dragover', (e) => {
+    if (!_draggedActivity || _draggedActivity === editor) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    const rect = editor.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    editor.classList.toggle('drag-over-top', before);
+    editor.classList.toggle('drag-over-bottom', !before);
+  });
+  editor.addEventListener('dragleave', () => {
+    editor.classList.remove('drag-over-top','drag-over-bottom');
+  });
+  editor.addEventListener('drop', (e) => {
+    if (!_draggedActivity || _draggedActivity === editor) return;
+    e.preventDefault();
+    const rect = editor.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    if (before) editor.parentNode.insertBefore(_draggedActivity, editor);
+    else editor.parentNode.insertBefore(_draggedActivity, editor.nextElementSibling);
+    editor.classList.remove('drag-over-top','drag-over-bottom');
+    renumberActivities();
+    updateTimeBar();
   });
 }
 
