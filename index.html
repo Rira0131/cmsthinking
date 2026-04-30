@@ -3608,9 +3608,8 @@ function toggleTextbookPanel() {
 
 function closeSlideshow() {
   closeSlideVideo();
-  closeSlideLightbox();
-  _videoSeenSlides.clear();
-  _imagesConsumedSlides.clear();
+  if (typeof closeSlideLightbox === 'function') closeSlideLightbox();
+  _slideVideoIdx.clear();
   document.getElementById('slideshow-overlay').classList.remove('open');
   document.getElementById('textbook-panel').classList.remove('open');
   document.getElementById('slide-book-btn').classList.remove('active');
@@ -3619,13 +3618,10 @@ function closeSlideshow() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
 
-// ── 발표 중 영상 인라인 재생 + 이미지 라이트박스 시퀀스 ──
-// 흐름: 활동 카드 도착 → 포인터 한 번 → 1번 이미지 라이트박스 → 한 번 더 → 2번 이미지
-//        → ... 마지막 이미지에서 한 번 더 → 라이트박스 닫기 → 영상 → 다음 슬라이드
-const _videoSeenSlides = new Set();
-const _imagesConsumedSlides = new Set();   // 이번 슬라이드의 이미지 시퀀스를 끝까지 본 슬라이드들
+// ── 발표 중 영상 인라인 재생 ──
+// 흐름: 활동 카드 도착 → 포인터 한 번 → 영상1 모달 → 한 번 더 → 영상2 모달 → ... → 다음 슬라이드
+const _slideVideoIdx = new Map();   // slideIdx → 마지막에 본 video 번호 (-1 = 시작 전)
 let _videoModalOpen = false;
-let _slideLightboxIdx = -1;   // -1 = 라이트박스 닫힘, 0..N-1 = 그 인덱스 이미지 보는 중
 
 function _imagesOnCurrentSlide() {
   const s = _slides[_slideIdx];
@@ -3708,16 +3704,16 @@ function _videoEmbedUrl(url) {
   return null;
 }
 
-// 현재 슬라이드의 첫 임베드 가능한 링크를 가져옴
-function _firstEmbeddableLinkOnCurrentSlide() {
+// 현재 슬라이드의 모든 임베드 가능 URL 배열을 가져옴 (등록 순서)
+function _embedUrlsOnCurrentSlide() {
   const s = _slides[_slideIdx];
-  if (!s || s.type !== 'activity') return null;
+  if (!s || s.type !== 'activity') return [];
   const links = (s.act && s.act.links) || [];
-  for (const lk of links) {
-    const embed = _videoEmbedUrl(lk.url);
-    if (embed) return embed;
-  }
-  return null;
+  return links.map(lk => _videoEmbedUrl(lk.url)).filter(Boolean);
+}
+// 하위 호환 — 첫 임베드 URL 반환
+function _firstEmbeddableLinkOnCurrentSlide() {
+  return _embedUrlsOnCurrentSlide()[0] || null;
 }
 
 function openSlideVideo(embedUrl) {
@@ -3739,25 +3735,24 @@ function closeSlideVideo() {
 }
 
 function slideMove(dir) {
-  // [단순화] 이미지 라이트박스 시퀀스 제거 — 마우스 사용자가 이미지 클릭하면 라이트박스 열림.
-  //   포인터 next/prev는 슬라이드 자체를 이동. 영상 모달 흐름은 유지.
+  // 발표 흐름: 슬라이드에 영상이 N개 있으면 포인터 누를 때마다 영상1 → 영상2 → ... → 다음 슬라이드.
+  //   영상 없는 슬라이드는 한 번에 다음 슬라이드로 이동.
+  const videos = _embedUrlsOnCurrentSlide();
+  const curIdx = _slideVideoIdx.has(_slideIdx) ? _slideVideoIdx.get(_slideIdx) : -1;
+
   if (dir === 1) {
-    // (1) 영상 모달 열려 있으면 → 닫고 다음 슬라이드로
-    if (_videoModalOpen) {
-      closeSlideVideo();
-      _videoSeenSlides.add(_slideIdx);
-      // fall through
+    // 다음에 보여줄 영상이 남아 있으면 → 그 영상 열기
+    const nextIdx = curIdx + 1;
+    if (nextIdx < videos.length) {
+      if (_videoModalOpen) closeSlideVideo();
+      openSlideVideo(videos[nextIdx]);
+      _slideVideoIdx.set(_slideIdx, nextIdx);
+      return;
     }
-    // (2) 현재 슬라이드에 임베드 가능한 영상이 있고 안 봤으면 → 영상 모달 열기 (다음 슬라이드 안 감)
-    else {
-      const embed = _firstEmbeddableLinkOnCurrentSlide();
-      if (embed && !_videoSeenSlides.has(_slideIdx)) {
-        openSlideVideo(embed);
-        return;
-      }
-    }
+    // 더 이상 영상 없음 — 모달 열려 있으면 닫고, 다음 슬라이드로 진행
+    if (_videoModalOpen) closeSlideVideo();
   }
-  // 이전 키: 영상 모달 열려 있으면 닫기만
+  // 이전 키: 영상 모달 열려 있으면 닫기만 (슬라이드 이동 없음)
   if (dir === -1 && _videoModalOpen) {
     closeSlideVideo();
     return;
@@ -3818,16 +3813,19 @@ function renderSlide() {
             ${(() => {
               const links = a.links || [];
               if (links.length === 0) return '';
-              const embeddable = links.find(lk => _videoEmbedUrl(lk.url));
-              const others = links.filter(lk => !_videoEmbedUrl(lk.url));
               let html = '<div style="margin-top:14px;display:flex;flex-direction:column;gap:6px">';
-              if (embeddable) {
-                // 클릭으로도 영상을 즉시 재생할 수 있게 onclick 부여
-                const embedUrl = _videoEmbedUrl(embeddable.url);
-                html += `<div class="slide-video-prompt" onclick="openSlideVideo(${JSON.stringify(embedUrl).replace(/"/g, '&quot;')})" style="cursor:pointer">▶️ 클릭 또는 → / Space 키 → 영상 재생 <span style="opacity:.85;font-weight:400">(${escHtml(embeddable.label || '영상')})</span></div>`;
-              }
-              others.forEach(lk => {
-                html += `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--sl-accent);text-decoration:underline;font-size:14px;word-break:break-all">🔗 ${escHtml(lk.label || lk.url)}</a>`;
+              let videoCount = 0;
+              links.forEach(lk => {
+                const embedUrl = _videoEmbedUrl(lk.url);
+                if (embedUrl) {
+                  // 영상 — 클릭하면 즉시 재생, 또는 포인터 → 키로 순서대로 재생
+                  videoCount++;
+                  const hint = videoCount === 1 ? '클릭 또는 → 키' : '클릭하여 재생';
+                  html += `<div class="slide-video-prompt" onclick="openSlideVideo(${JSON.stringify(embedUrl).replace(/"/g, '&quot;')})" style="cursor:pointer">▶️ <strong>영상 ${videoCount}</strong> · ${hint} <span style="opacity:.85;font-weight:400">— ${escHtml(lk.label || '영상')}</span></div>`;
+                } else {
+                  // 일반 외부 링크
+                  html += `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--sl-accent);text-decoration:underline;font-size:14px;word-break:break-all">🔗 ${escHtml(lk.label || lk.url)}</a>`;
+                }
               });
               html += '</div>';
               return html;
