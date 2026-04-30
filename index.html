@@ -469,7 +469,10 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 #slideshow-overlay.theme-dark .slide-book-btn.active,
 #slideshow-overlay.theme-dark .slide-theme-btn:hover{background:rgba(99,102,241,0.5);color:#fff}
 .slide-main-row{flex:1;display:flex;overflow:hidden;min-height:0}
-.slide-area{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 80px;overflow:hidden;position:relative;transition:flex .3s}
+.slide-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 80px;overflow-y:auto;overflow-x:hidden;position:relative;transition:flex .3s}
+.slide-area::-webkit-scrollbar{width:8px}
+.slide-area::-webkit-scrollbar-thumb{background:rgba(120,120,180,0.4);border-radius:4px}
+.slide-area::-webkit-scrollbar-thumb:hover{background:rgba(120,120,180,0.6)}
 #textbook-panel{width:320px;flex-shrink:0;background:var(--sl-panel-bg);border-left:var(--sl-panel-border-left);display:none;flex-direction:column;overflow-y:auto}
 #textbook-panel.open{display:flex}
 #textbook-panel .tb-header{padding:16px 16px 10px;color:var(--sl-accent);font-size:13px;font-weight:700;border-bottom:var(--sl-card-border);flex-shrink:0}
@@ -477,11 +480,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 #textbook-panel .tb-img-wrap{border-radius:10px;overflow:hidden;border:var(--sl-card-border)}
 #textbook-panel .tb-img-wrap img{width:100%;display:block;cursor:zoom-in}
 #textbook-panel .tb-empty{padding:24px 16px;color:var(--sl-fg-muted);font-size:13px;text-align:center}
-.slide-content{width:100%;max-width:900px;animation:slideIn .25s ease;transition:transform .2s ease;will-change:transform;max-height:100%}
-.slide-content::-webkit-scrollbar{width:6px}
-.slide-content::-webkit-scrollbar-thumb{background:rgba(120,120,180,0.35);border-radius:3px}
-/* 극단적으로 긴 카드는 내부에서 스크롤 가능 (자동 축소가 한계까지 갔을 때) */
-.slide-activity-card,.slide-objectives{overflow-y:auto}
+.slide-content{width:100%;max-width:900px;animation:slideIn .25s ease;margin-top:auto;margin-bottom:auto;flex-shrink:0}
 @keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .slide-title-card{text-align:center;color:var(--sl-fg)}
 .slide-title-card h1{font-size:clamp(28px,4vw,52px);font-weight:800;color:var(--sl-fg);margin-bottom:16px;line-height:1.2}
@@ -925,10 +924,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 </div>
 
 
-<div id="img-lightbox" onclick="onLightboxClick(event)">
-  <img id="img-lightbox-img" src="">
-  <button id="lightbox-close-btn" onclick="event.stopPropagation();closeSlideLightbox()" title="닫기 (ESC)" style="position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);z-index:1">✕</button>
-</div>
+<div id="img-lightbox" onclick="this.classList.remove('open')"><img id="img-lightbox-img" src=""></div>
 
 <!-- 슬라이드쇼 오버레이 -->
 <div id="slideshow-overlay">
@@ -3598,12 +3594,15 @@ function _autofitSlideContent() {
   if (!area) return;
   const content = area.querySelector('.slide-content');
   if (!content) return;
-  // 변환 초기화 후 실제 크기 측정
-  content.style.transform = '';
+  // 변환 초기화 후 실제 크기 측정 (transform이 측정에 영향 주지 않게)
+  content.style.transform = 'none';
+  // 강제 reflow로 정확한 측정값 보장
+  void content.offsetHeight;
   const aw = Math.max(0, area.clientWidth - 16);
   const ah = Math.max(0, area.clientHeight - 16);
-  const cw = content.scrollWidth;
+  // scrollHeight/Width = 콘텐츠의 실제 크기
   const ch = content.scrollHeight;
+  const cw = content.scrollWidth;
   let s = 1;
   if (ch > ah) s = Math.min(s, ah / ch);
   if (cw > aw) s = Math.min(s, aw / cw);
@@ -3694,42 +3693,16 @@ function closeSlideVideo() {
 }
 
 function slideMove(dir) {
-  const imgs = _imagesOnCurrentSlide();
-
-  // 다음 키 동작
+  // [단순화] 이미지 라이트박스 시퀀스 제거 — 마우스 사용자가 이미지 클릭하면 라이트박스 열림.
+  //   포인터 next/prev는 슬라이드 자체를 이동. 영상 모달 흐름은 유지.
   if (dir === 1) {
-    // (1) 영상 모달 열려 있음 → 닫고 다음 슬라이드로 진행
+    // (1) 영상 모달 열려 있으면 → 닫고 다음 슬라이드로
     if (_videoModalOpen) {
       closeSlideVideo();
       _videoSeenSlides.add(_slideIdx);
-      // fall through → 다음 슬라이드
+      // fall through
     }
-    // (2) 이미지 라이트박스 열려 있음 → 다음 이미지 또는 닫기
-    else if (_slideLightboxIdx >= 0) {
-      if (_slideLightboxIdx < imgs.length - 1) {
-        // 다음 이미지로
-        _slideLightboxIdx++;
-        const lbImg = document.getElementById('img-lightbox-img');
-        if (lbImg) lbImg.src = imgs[_slideLightboxIdx];
-        _updateThumbHighlight();
-        return;
-      }
-      // 마지막 이미지였음 → 라이트박스 닫고 영상 단계로
-      closeSlideLightbox();
-      _imagesConsumedSlides.add(_slideIdx);
-      const embed = _firstEmbeddableLinkOnCurrentSlide();
-      if (embed && !_videoSeenSlides.has(_slideIdx)) {
-        openSlideVideo(embed);
-        return;
-      }
-      // 영상 없으면 다음 슬라이드로 fall through
-    }
-    // (3) 라이트박스도 영상도 닫혀 있고, 이미지가 있고 아직 시퀀스 안 끝났으면 → 첫 이미지 라이트박스 열기
-    else if (imgs.length > 0 && !_imagesConsumedSlides.has(_slideIdx)) {
-      openSlideImageAt(0);
-      return;
-    }
-    // (4) 이미지 시퀀스 끝났고 영상이 있으면 → 영상 모달 열기
+    // (2) 현재 슬라이드에 임베드 가능한 영상이 있고 안 봤으면 → 영상 모달 열기 (다음 슬라이드 안 감)
     else {
       const embed = _firstEmbeddableLinkOnCurrentSlide();
       if (embed && !_videoSeenSlides.has(_slideIdx)) {
@@ -3738,26 +3711,10 @@ function slideMove(dir) {
       }
     }
   }
-
-  // 이전 키
-  if (dir === -1) {
-    // (1) 영상 모달 열려 있으면 닫기만
-    if (_videoModalOpen) {
-      closeSlideVideo();
-      return;
-    }
-    // (2) 라이트박스 열려 있으면 이전 이미지 또는 닫기
-    if (_slideLightboxIdx > 0) {
-      _slideLightboxIdx--;
-      const lbImg = document.getElementById('img-lightbox-img');
-      if (lbImg) lbImg.src = imgs[_slideLightboxIdx];
-      _updateThumbHighlight();
-      return;
-    }
-    if (_slideLightboxIdx === 0) {
-      closeSlideLightbox();
-      return;
-    }
+  // 이전 키: 영상 모달 열려 있으면 닫기만
+  if (dir === -1 && _videoModalOpen) {
+    closeSlideVideo();
+    return;
   }
 
   const next = _slideIdx + dir;
@@ -3828,22 +3785,16 @@ function renderSlide() {
               return html;
             })()}
           </div>
-          ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map((src, i) => `<img data-img-idx="${i}" src="${src}" onclick="openSlideImageAt(${i})" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
+          ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
         </div>
       </div>`;
   }
 
   const areaEl = document.getElementById('slide-area');
   areaEl.innerHTML = html;
-  // [신규] 콘텐츠가 화면보다 크면 자동 축소 — 레이아웃 안정 후 측정해야 정확
-  setTimeout(_autofitSlideContent, 30);
+  // [수정] transform 자동 축소 대신 슬라이드 영역에서 자연 스크롤 — 새 슬라이드는 항상 맨 위부터 보이게
+  areaEl.scrollTop = 0;
 }
-
-// 창 크기 변경 시에도 다시 맞추기
-window.addEventListener('resize', () => {
-  const overlay = document.getElementById('slideshow-overlay');
-  if (overlay && overlay.classList.contains('open')) _autofitSlideContent();
-});
 
 function jumpSlide(idx) {
   _slideIdx = idx;
@@ -4012,8 +3963,10 @@ async function saveLesson() {
   if (!title) { showToast('⚠️ 테마명을 입력해주세요'); return; }
   
   const activities = [];
+  let skippedEmpty = 0;
   document.querySelectorAll('.activity-editor').forEach(ae => {
     const name = ae.querySelector('.act-name').value.trim();
+    if (!name) { skippedEmpty++; return; }
     if (name) {
       const imgGrid = ae.querySelector('.img-grid');
       const images = imgGrid
@@ -4076,21 +4029,30 @@ async function saveLesson() {
     updatedAt: new Date().toISOString()
   };
   
-  // _state 업데이트
-  const existIdx = _state.customLessons.findIndex(c => c.id === lesson.id);
-  if (existIdx >= 0) _state.customLessons[existIdx] = lesson;
-  else _state.customLessons.push(lesson);
-  // Supabase 저장 — 에러를 명확히 표면화
+  // [수정] 저장 순서 변경 — DB 먼저 저장, 성공해야 로컬 state 갱신.
+  //   이전 흐름은 로컬을 먼저 바꾸고 DB가 실패해도 화면엔 변경이 보였다가, 새로고침하면
+  //   DB의 옛 데이터가 다시 로드되어 "변경이 날아간 것처럼" 보이는 문제가 있었음.
+  console.log(`[saveLesson] id=${lesson.id} 활동 ${activities.length}개 저장 시도`);
+  // 활동명 비어 있어 저장 대상에서 빠진 활동이 있으면 사용자에게 안내
+  if (skippedEmpty > 0) {
+    console.warn(`[saveLesson] 활동명 빈 활동 ${skippedEmpty}개는 저장에서 제외됨`);
+    showToast(`⚠️ 활동명 비어있는 활동 ${skippedEmpty}개는 저장되지 않습니다`);
+  }
   window._justSaved = Date.now();
   try {
     const { error } = await _sb.from('custom_lessons')
       .upsert({id: lesson.id, data: lesson, updated_at: new Date().toISOString()});
     if (error) throw error;
   } catch(e) {
-    console.error('saveLesson DB upsert 실패:', e);
-    showToast('⚠️ 저장 실패 — 인터넷 연결 또는 권한 확인 필요');
-    return;   // 실패 시 후속 처리(에디터 유지 등)는 건너뜀
+    console.error('[saveLesson] DB upsert 실패:', e);
+    showToast('⚠️ 저장 실패 — ' + (e.message || '인터넷/권한 확인 필요'));
+    return;   // 로컬 state 갱신도 하지 않음 (DB와 화면 불일치 방지)
   }
+  // DB 저장 성공한 후에만 로컬 state 갱신
+  const existIdx = _state.customLessons.findIndex(c => c.id === lesson.id);
+  if (existIdx >= 0) _state.customLessons[existIdx] = lesson;
+  else _state.customLessons.push(lesson);
+  console.log(`[saveLesson] ✓ 저장 완료 — _state.customLessons에 ${activities.length}개 활동 반영됨`);
 
   showToast('✅ 저장되었습니다');
   // [패치] 저장 후에도 현재 편집 화면을 그대로 유지한다.
