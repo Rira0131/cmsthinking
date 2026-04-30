@@ -477,7 +477,11 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 #textbook-panel .tb-img-wrap{border-radius:10px;overflow:hidden;border:var(--sl-card-border)}
 #textbook-panel .tb-img-wrap img{width:100%;display:block;cursor:zoom-in}
 #textbook-panel .tb-empty{padding:24px 16px;color:var(--sl-fg-muted);font-size:13px;text-align:center}
-.slide-content{width:100%;max-width:900px;animation:slideIn .25s ease}
+.slide-content{width:100%;max-width:900px;animation:slideIn .25s ease;transition:transform .2s ease;will-change:transform;max-height:100%}
+.slide-content::-webkit-scrollbar{width:6px}
+.slide-content::-webkit-scrollbar-thumb{background:rgba(120,120,180,0.35);border-radius:3px}
+/* 극단적으로 긴 카드는 내부에서 스크롤 가능 (자동 축소가 한계까지 갔을 때) */
+.slide-activity-card,.slide-objectives{overflow-y:auto}
 @keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .slide-title-card{text-align:center;color:var(--sl-fg)}
 .slide-title-card h1{font-size:clamp(28px,4vw,52px);font-weight:800;color:var(--sl-fg);margin-bottom:16px;line-height:1.2}
@@ -921,7 +925,10 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 </div>
 
 
-<div id="img-lightbox" onclick="closeSlideLightbox()"><img id="img-lightbox-img" src=""></div>
+<div id="img-lightbox" onclick="onLightboxClick(event)">
+  <img id="img-lightbox-img" src="">
+  <button id="lightbox-close-btn" onclick="event.stopPropagation();closeSlideLightbox()" title="닫기 (ESC)" style="position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);z-index:1">✕</button>
+</div>
 
 <!-- 슬라이드쇼 오버레이 -->
 <div id="slideshow-overlay">
@@ -3584,6 +3591,29 @@ function _imagesOnCurrentSlide() {
   return (s.act && s.act.images) || [];
 }
 
+// 슬라이드 카드가 화면보다 크면 transform:scale로 자동 축소해 한 화면에 맞춘다.
+// 콘텐츠가 너무 길면 0.55까지만 축소(가독성 보호) 후 카드 내부 스크롤로 대체.
+function _autofitSlideContent() {
+  const area = document.getElementById('slide-area');
+  if (!area) return;
+  const content = area.querySelector('.slide-content');
+  if (!content) return;
+  // 변환 초기화 후 실제 크기 측정
+  content.style.transform = '';
+  const aw = Math.max(0, area.clientWidth - 16);
+  const ah = Math.max(0, area.clientHeight - 16);
+  const cw = content.scrollWidth;
+  const ch = content.scrollHeight;
+  let s = 1;
+  if (ch > ah) s = Math.min(s, ah / ch);
+  if (cw > aw) s = Math.min(s, aw / cw);
+  if (s < 1) {
+    if (s < 0.55) s = 0.55;   // 가독성 하한
+    content.style.transform = `scale(${s})`;
+    content.style.transformOrigin = 'center center';
+  }
+}
+
 // 현재 라이트박스 인덱스를 썸네일 강조 표시에 반영
 function _updateThumbHighlight() {
   const imgs = document.querySelectorAll('.slide-act-imgs img');
@@ -3599,6 +3629,20 @@ function openSlideImageAt(idx) {
   _slideLightboxIdx = idx;
   if (typeof openLightbox === 'function') openLightbox(imgs[idx]);
   _updateThumbHighlight();
+}
+
+// 라이트박스 영역 클릭 시 동작
+//   슬라이드쇼 모드(이미지 시퀀스 중)에는 → 다음 이미지로 진행 (닫지 않음)
+//   일반 모드에서는 → 닫기 (기존 동작 유지)
+function onLightboxClick(e) {
+  // X 버튼 클릭은 자체에서 stopPropagation으로 처리됨
+  const overlay = document.getElementById('slideshow-overlay');
+  const inSlideshow = overlay && overlay.classList.contains('open') && _slideLightboxIdx >= 0;
+  if (inSlideshow) {
+    if (typeof slideMove === 'function') slideMove(1);
+  } else {
+    closeSlideLightbox();
+  }
 }
 
 // 라이트박스 닫고 슬라이드 시퀀스 상태 리셋
@@ -3791,7 +3835,15 @@ function renderSlide() {
 
   const areaEl = document.getElementById('slide-area');
   areaEl.innerHTML = html;
+  // [신규] 콘텐츠가 화면보다 크면 자동 축소 — 레이아웃 안정 후 측정해야 정확
+  setTimeout(_autofitSlideContent, 30);
 }
+
+// 창 크기 변경 시에도 다시 맞추기
+window.addEventListener('resize', () => {
+  const overlay = document.getElementById('slideshow-overlay');
+  if (overlay && overlay.classList.contains('open')) _autofitSlideContent();
+});
 
 function jumpSlide(idx) {
   _slideIdx = idx;
@@ -4028,8 +4080,17 @@ async function saveLesson() {
   const existIdx = _state.customLessons.findIndex(c => c.id === lesson.id);
   if (existIdx >= 0) _state.customLessons[existIdx] = lesson;
   else _state.customLessons.push(lesson);
-  // Supabase 저장
-  await _sb.from('custom_lessons').upsert({id: lesson.id, data: lesson, updated_at: new Date().toISOString()});
+  // Supabase 저장 — 에러를 명확히 표면화
+  window._justSaved = Date.now();
+  try {
+    const { error } = await _sb.from('custom_lessons')
+      .upsert({id: lesson.id, data: lesson, updated_at: new Date().toISOString()});
+    if (error) throw error;
+  } catch(e) {
+    console.error('saveLesson DB upsert 실패:', e);
+    showToast('⚠️ 저장 실패 — 인터넷 연결 또는 권한 확인 필요');
+    return;   // 실패 시 후속 처리(에디터 유지 등)는 건너뜀
+  }
 
   showToast('✅ 저장되었습니다');
   // [패치] 저장 후에도 현재 편집 화면을 그대로 유지한다.
