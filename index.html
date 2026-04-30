@@ -480,10 +480,12 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-act-body{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start}
 .slide-act-research{font-size:16px;color:var(--sl-fg-soft);line-height:1.85;white-space:pre-wrap}
 .slide-act-imgs{display:flex;flex-direction:column;gap:8px;max-width:240px}
-.slide-act-imgs img{width:100%;border-radius:10px;object-fit:cover;max-height:160px;cursor:zoom-in}
+.slide-act-imgs img{width:100%;border-radius:10px;object-fit:cover;max-height:160px;cursor:zoom-in;transition:opacity .35s ease,filter .35s ease,transform .35s ease}
 /* 이미지가 4장 이상이면 2열 그리드로 전환 — 세로로 너무 길어지지 않도록 */
 .slide-act-imgs.multi{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:280px}
 .slide-act-imgs.multi img{max-height:110px}
+/* 단계별 노출: 아직 공개 안 된 이미지는 흐릿하게 처리 */
+.slide-act-imgs img[data-revealed="false"]{opacity:0.18;filter:blur(4px);transform:scale(0.96);pointer-events:none}
 .slide-act-extras{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
 .slide-extra-tag{background:var(--sl-tag-bg);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--sl-tag-fg)}
 .slide-nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 24px;flex-shrink:0}
@@ -3477,10 +3479,25 @@ function closeSlideshow() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
 
-// ── 발표 중 영상 인라인 재생 (구상 2) ──
-// 흐름: 활동 카드 도착 → 포인터 한 번 더 → 영상 모달 → 포인터 한 번 더 → 다음 슬라이드
-const _videoSeenSlides = new Set();    // 이번 슬라이드의 영상을 이미 봤는지 기록
+// ── 발표 중 영상 인라인 재생 + 이미지 단계별 노출 ──
+// 흐름: 활동 카드 도착 → 포인터로 이미지 한 장씩 노출 → 모두 노출 후 → 영상 → 다음 슬라이드
+const _videoSeenSlides = new Set();
 let _videoModalOpen = false;
+let _imageStep = 0;   // 현재 슬라이드에서 노출된 이미지 수 (0 = 아무것도 노출 안 됨)
+
+function _imagesOnCurrentSlide() {
+  const s = _slides[_slideIdx];
+  if (!s || s.type !== 'activity') return [];
+  return (s.act && s.act.images) || [];
+}
+
+// DOM에 있는 이미지들의 data-revealed 속성을 _imageStep에 맞춰 갱신
+function _updateImageReveal() {
+  const imgs = document.querySelectorAll('.slide-act-imgs img');
+  imgs.forEach((img, i) => {
+    img.setAttribute('data-revealed', i < _imageStep ? 'true' : 'false');
+  });
+}
 
 // 유튜브/Vimeo URL → 임베드 URL. 변환 불가능한 URL은 null 반환.
 function _videoEmbedUrl(url) {
@@ -3525,14 +3542,21 @@ function closeSlideVideo() {
 function slideMove(dir) {
   // 다음 키 동작
   if (dir === 1) {
-    // (1) 영상 모달이 열려 있으면 → 닫고 다음 슬라이드로 (한 번에 두 동작)
+    // (1) 영상 모달이 열려 있으면 → 닫고 다음 슬라이드로
     if (_videoModalOpen) {
       closeSlideVideo();
       _videoSeenSlides.add(_slideIdx);
-      // 그대로 다음 슬라이드 진행 로직으로 흘러감
+      // 그대로 다음 슬라이드 진행 로직으로
     }
-    // (2) 현재 슬라이드에 임베드 가능한 영상이 있고 아직 안 봤으면 → 영상 열기 (다음으로 안 감)
+    // (2) 이미지가 있고 아직 다 안 봤으면 → 한 장 추가 노출
     else {
+      const imgs = _imagesOnCurrentSlide();
+      if (_imageStep < imgs.length) {
+        _imageStep++;
+        _updateImageReveal();
+        return;
+      }
+      // (3) 영상이 있고 아직 안 봤으면 → 영상 모달 열기
       const embed = _firstEmbeddableLinkOnCurrentSlide();
       if (embed && !_videoSeenSlides.has(_slideIdx)) {
         openSlideVideo(embed);
@@ -3540,10 +3564,19 @@ function slideMove(dir) {
       }
     }
   }
-  // 이전 키: 영상 모달 열려 있으면 닫기만 (슬라이드 이동 없음)
-  if (dir === -1 && _videoModalOpen) {
-    closeSlideVideo();
-    return;
+  // 이전 키
+  if (dir === -1) {
+    // (1) 영상 모달 열려 있으면 → 닫기만
+    if (_videoModalOpen) {
+      closeSlideVideo();
+      return;
+    }
+    // (2) 이미지가 한 장 이상 노출되어 있으면 → 한 장 숨기기
+    if (_imageStep > 0) {
+      _imageStep--;
+      _updateImageReveal();
+      return;
+    }
   }
   const next = _slideIdx + dir;
   if (next < 0 || next >= _slides.length) return;
@@ -3552,6 +3585,8 @@ function slideMove(dir) {
 }
 
 function renderSlide() {
+  // [신규] 슬라이드 전환 시 이미지 단계 리셋. 처음엔 모든 이미지가 흐릿하게 시작.
+  _imageStep = 0;
   const s = _slides[_slideIdx];
   const total = _slides.length;
   const pct = total === 1 ? 100 : (_slideIdx / (total - 1)) * 100;
@@ -3610,7 +3645,7 @@ function renderSlide() {
               return html;
             })()}
           </div>
-          ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
+          ${hasImgs ? `<div class="slide-act-imgs ${a.images.length > 3 ? 'multi' : ''}">${a.images.map((src, i) => `<img data-revealed="false" data-img-idx="${i}" src="${src}" onclick="openLightbox('${src}')" title="클릭하면 크게 보기">`).join('')}</div>` : ''}
         </div>
       </div>`;
   }
@@ -3655,6 +3690,16 @@ function _handleSlideshowKey(e) {
   if (prevKeys.indexOf(k) >= 0) { e.preventDefault(); slideMove(-1); return; }
   if (k === 'Home') { e.preventDefault(); _slideIdx = 0; renderSlide(); return; }
   if (k === 'End')  { e.preventDefault(); _slideIdx = _slides.length - 1; renderSlide(); return; }
+  // [신규] 0 키: 현재 슬라이드의 모든 이미지를 즉시 노출 (단계별 진행 건너뛰기)
+  if (k === '0') {
+    e.preventDefault();
+    const imgs = _imagesOnCurrentSlide();
+    if (_imageStep < imgs.length) {
+      _imageStep = imgs.length;
+      _updateImageReveal();
+    }
+    return;
+  }
   if (k === 'Escape' || k === 'F5') {
     // 영상 모달이 열려 있으면 그것부터 닫기 — 슬라이드쇼는 유지
     if (_videoModalOpen) { e.preventDefault(); closeSlideVideo(); return; }
