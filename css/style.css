@@ -592,6 +592,18 @@ span.math:hover{background:rgba(255,107,157,.12);outline:1px dashed rgba(255,107
 .badge-gyogwa-grade{background:#E0F2FE;color:#0369A1;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
 .badge-gyogwa-unit{background:#F0FDF4;color:#166534;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
 
+/* ── 사용설명서 ── */
+.help-section{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(255,107,157,.07);border:1px solid rgba(255,107,157,.08);margin-bottom:20px;overflow:hidden}
+.help-section-title{background:linear-gradient(135deg,#FF6B9D,#FF8E6E);color:#fff;font-size:16px;font-weight:700;padding:14px 22px}
+.help-section-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.help-section-body>p{font-size:14px;color:var(--gray-700);line-height:1.7}
+.help-block{background:var(--gray-50);border-radius:10px;padding:14px 16px;border-left:4px solid var(--primary-light)}
+.help-block-title{font-size:14px;font-weight:700;color:var(--gray-700);margin-bottom:8px}
+.help-block ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.help-block li{font-size:13px;color:var(--gray-700);line-height:1.65}
+.help-block li ul{margin-top:4px;gap:3px}
+.help-block strong{color:var(--gray-900)}
+
 /* ── 교과 인덱스 ── */
 .gyogwa-section{margin-bottom:24px}
 .gyogwa-section-header{font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#0EA5E9,#2563EB);padding:8px 16px;border-radius:10px;margin-bottom:10px}
