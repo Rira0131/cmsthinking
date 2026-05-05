@@ -1,4 +1,5 @@
-// ── 라이브러리 탭 상태 (사고력 / 교과) ──
+// ── 라이브러리 상태 변수 ──
+let currentLevel = '';           // 레벨/학년 칩 필터
 let _currentLibraryTab = '사고력';
 let _gyogwaUnitFilter = '';   // 교과 인덱스에서 특정 단원 클릭 시 설정
 

@@ -95,6 +95,3 @@ function renderSchedule() {
   document.getElementById('schedule-grid').innerHTML = html;
   window._scheduleProgress = { completed: completedCount, total: totalCount };
 }
-
-// Library
-let currentLevel = '';
