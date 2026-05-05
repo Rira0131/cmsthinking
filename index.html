@@ -564,6 +564,36 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 수식 입력/렌더링 라이브러리 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://unpkg.com/mathlive@0.101.0/dist/mathlive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+/* ── 수식 관련 스타일 ── */
+span.math{display:inline-block;vertical-align:middle;padding:1px 4px;border-radius:4px;cursor:pointer;transition:background .15s}
+span.math:hover{background:rgba(255,107,157,.12);outline:1px dashed rgba(255,107,157,.4)}
+.research-editor span.math{user-select:none}
+/* 수식 편집 모달 */
+#math-editor-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10500;align-items:center;justify-content:center;padding:20px}
+#math-editor-modal.open{display:flex}
+.math-modal-box{background:#fff;border-radius:16px;padding:22px;width:560px;max-width:96vw;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.math-modal-title{font-size:16px;font-weight:700;color:#2D1B17;margin-bottom:6px}
+.math-modal-hint{font-size:12px;color:#A0887D;margin-bottom:12px;line-height:1.5}
+.math-modal-field-wrap{border:2px solid #FFD0E2;border-radius:10px;padding:8px;margin-bottom:14px;transition:border-color .15s;background:#FFF9FB}
+.math-modal-field-wrap:focus-within{border-color:#FF6B9D}
+#math-editor-field{font-size:20px;width:100%;min-height:90px;border:none;outline:none;background:transparent}
+.math-modal-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.math-preset-btn{padding:5px 10px;border:1px solid #FFD0E2;background:#fff;border-radius:8px;font-size:12px;cursor:pointer;color:#FF6B9D;transition:all .15s}
+.math-preset-btn:hover{background:#FFF0F5;border-color:#FF6B9D}
+.math-modal-buttons{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.math-btn-cancel{padding:9px 18px;border:1px solid #ddd;background:#fff;border-radius:10px;cursor:pointer;font-size:14px;color:#666}
+.math-btn-cancel:hover{background:#f5f5f5}
+.math-btn-confirm{padding:9px 20px;border:none;background:linear-gradient(135deg,#FF6B9D,#FF8E6E);color:#fff;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(255,107,157,.3)}
+.math-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(255,107,157,.4)}
+.math-btn-delete{padding:9px 14px;border:1px solid #FF6B6B;background:#fff;color:#FF6B6B;border-radius:10px;cursor:pointer;font-size:13px;margin-right:auto}
+.math-btn-delete:hover{background:#FFF0F0}
+</style>
 </head>
 <body>
 
@@ -2646,7 +2676,9 @@ function filterLessons() {
       </button>
     </div>`;
   }
-  document.getElementById('lesson-list').innerHTML = html;
+  const _lessonListEl = document.getElementById('lesson-list');
+  _lessonListEl.innerHTML = html;
+  _scheduleMathRender(_lessonListEl);
 }
 
 function highlightText(text, query) {
@@ -2739,19 +2771,39 @@ async function deleteComment(commentId, lessonId) {
 // Editor
 
 // ── 활동 연구 서식(rich text) 헬퍼 ──
-// 허용 태그: 굵게/기울임/밑줄/줄바꿈/색상·형광펜용 span
-const _RESEARCH_ALLOWED_TAGS = new Set(['B','STRONG','I','EM','U','BR','SPAN','DIV','P','MARK','FONT']);
+// 허용 태그: 굵게/기울임/밑줄/줄바꿈/색상·형광펜용 span + 수식용 span
+const _RESEARCH_ALLOWED_TAGS = ['b','strong','i','em','u','br','span','div','p','mark','font'];
+const _RESEARCH_ALLOWED_ATTRS = ['style','color','class','data-latex'];
 const _RESEARCH_ALLOWED_STYLES = ['color','background-color','background','font-weight','font-style','text-decoration'];
+const _MATH_LATEX_MAX = 800; // 수식 LaTeX 최대 길이 (안전)
 
 function isResearchHtml(s) {
   if (!s) return false;
   return /<(b|i|u|strong|em|span|br|p|div|mark|font)[\s>\/]/i.test(s);
 }
 
+// DOMPurify 기반 안전한 sanitizer.
+// - <span class="math" data-latex="..."> 만 class·data-latex 보존
+// - 다른 모든 class/이벤트핸들러/스크립트/외부 속성은 제거
+// - style 속성은 허용된 CSS 속성만 통과
 function sanitizeResearchHtml(html) {
   if (!html) return '';
+  // DOMPurify 미로드 시 안전 폴백 — 텍스트로만 표현
+  if (typeof DOMPurify === 'undefined') {
+    return String(html).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  // 1차: DOMPurify로 태그·속성·스크립트 차단
+  let cleaned = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: _RESEARCH_ALLOWED_TAGS,
+    ALLOWED_ATTR: _RESEARCH_ALLOWED_ATTRS,
+    KEEP_CONTENT: true,
+    FORBID_TAGS: ['script','style','iframe','object','embed','link','meta'],
+    FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','href','src']
+  });
+  // 2차: style 속성 허용 CSS만 남기고, class는 'math'만 허용,
+  //      수식 span은 렌더링된 자식 비우고 data-latex만 남김 (저장 용량 절감)
   const tpl = document.createElement('template');
-  tpl.innerHTML = html;
+  tpl.innerHTML = cleaned;
   const filterStyle = (val) => {
     return (val || '').split(';').map(s => s.trim()).filter(s => {
       if (!s) return false;
@@ -2759,33 +2811,38 @@ function sanitizeResearchHtml(html) {
       return _RESEARCH_ALLOWED_STYLES.includes(prop);
     }).join('; ');
   };
-  const walk = (node) => {
-    const children = Array.from(node.childNodes);
-    for (const child of children) {
-      if (child.nodeType === Node.TEXT_NODE) continue;
-      if (child.nodeType !== Node.ELEMENT_NODE) { child.remove(); continue; }
-      if (!_RESEARCH_ALLOWED_TAGS.has(child.tagName)) {
-        const frag = document.createDocumentFragment();
-        while (child.firstChild) frag.appendChild(child.firstChild);
-        child.replaceWith(frag);
-        walk(node);
-        return;
-      }
-      for (const attr of Array.from(child.attributes)) {
-        if (attr.name.toLowerCase() === 'style') {
-          const safe = filterStyle(attr.value);
-          if (safe) child.setAttribute('style', safe);
-          else child.removeAttribute('style');
-        } else if (attr.name.toLowerCase() === 'color' && child.tagName === 'FONT') {
-          // 호환: <font color="..."> 그대로
-        } else {
-          child.removeAttribute(attr.name);
-        }
-      }
-      walk(child);
+  // style 정리
+  tpl.content.querySelectorAll('[style]').forEach(el => {
+    const safe = filterStyle(el.getAttribute('style'));
+    if (safe) el.setAttribute('style', safe);
+    else el.removeAttribute('style');
+  });
+  // class는 'math' 하나만 허용
+  tpl.content.querySelectorAll('[class]').forEach(el => {
+    if (el.classList && el.classList.contains('math')) {
+      el.className = 'math';
+    } else {
+      el.removeAttribute('class');
     }
-  };
-  walk(tpl.content);
+  });
+  // 수식 span: data-latex 검증 + 렌더링 자식 비우기
+  tpl.content.querySelectorAll('span.math').forEach(el => {
+    const latex = (el.getAttribute('data-latex') || '').trim();
+    if (!latex) {
+      // data-latex 없는 math span은 텍스트로 변환
+      const txt = document.createTextNode(el.textContent || '');
+      el.replaceWith(txt);
+      return;
+    }
+    if (latex.length > _MATH_LATEX_MAX) {
+      // 너무 긴 수식은 자르기
+      el.setAttribute('data-latex', latex.slice(0, _MATH_LATEX_MAX));
+    }
+    // 렌더링된 KaTeX 자식 제거 — 저장은 data-latex만
+    el.innerHTML = '';
+  });
+  // class만 있고 math가 아닌 잔여 빈 속성 제거 (안전)
+  tpl.content.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
   return tpl.innerHTML;
 }
 
@@ -2808,8 +2865,218 @@ function researchToPlainText(s) {
   if (!isResearchHtml(s)) return s;
   const tpl = document.createElement('template');
   tpl.innerHTML = sanitizeResearchHtml(s);
+  // 검색 시 LaTeX 소스(data-latex)는 제외 — 사용자가 원본 LaTeX를 검색어로 쓸 일은 없음
+  tpl.content.querySelectorAll('span.math').forEach(el => el.remove());
   return (tpl.content.textContent || '').replace(/\s+/g, ' ').trim();
 }
+
+// ── 수식(KaTeX) 렌더링 ──
+// span.math[data-latex]를 찾아 KaTeX로 렌더링. 이미 렌더링된 것은 건너뜀.
+function renderMathIn(container) {
+  if (!container || typeof katex === 'undefined') return;
+  container.querySelectorAll('span.math[data-latex]').forEach(el => {
+    if (el.dataset.rendered === '1') return;
+    const latex = el.getAttribute('data-latex') || '';
+    try {
+      katex.render(latex, el, { throwOnError: false, displayMode: false, output: 'html' });
+      el.dataset.rendered = '1';
+      el.setAttribute('contenteditable', 'false');
+    } catch (e) {
+      el.textContent = latex;
+    }
+  });
+}
+
+// KaTeX 로드 지연 시 재시도용
+function _scheduleMathRender(container) {
+  if (!container) return;
+  const tryRender = () => {
+    if (typeof katex !== 'undefined') {
+      renderMathIn(container);
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  };
+  tryRender();
+}
+
+// ── 수식 편집 모달 로직 ──
+let _mathEditorState = null; // { editor, savedRange, editingSpan }
+
+function openMathEditorForResearch(btn) {
+  const wrap = btn.closest('.activity-editor');
+  if (!wrap) return;
+  const editor = wrap.querySelector('.act-research');
+  if (!editor) return;
+  editor.focus();
+  // 현재 커서 위치 저장 (활동 연구 에디터 내부일 때만)
+  const sel = window.getSelection();
+  let savedRange = null;
+  let editingSpan = null;
+  if (sel && sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0);
+    if (editor.contains(r.commonAncestorContainer)) {
+      savedRange = r.cloneRange();
+      // 커서가 기존 수식 span 안에 있는지 확인 (편집 모드 자동 진입)
+      let node = r.startContainer;
+      while (node && node !== editor) {
+        if (node.nodeType === 1 && node.classList && node.classList.contains('math')) {
+          editingSpan = node;
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+  }
+  _openMathModal({ editor, savedRange, editingSpan, initialLatex: editingSpan ? (editingSpan.getAttribute('data-latex') || '') : '' });
+}
+
+function _openMathModal(state) {
+  _mathEditorState = state;
+  const modal = document.getElementById('math-editor-modal');
+  if (!modal) return;
+  const mf = document.getElementById('math-editor-field');
+  // 삭제 버튼은 기존 수식 편집 시에만
+  const delBtn = document.getElementById('math-btn-delete');
+  if (delBtn) delBtn.style.display = state.editingSpan ? 'inline-block' : 'none';
+  // MathLive가 아직 로드 안 됐다면 잠깐 대기
+  const mountField = () => {
+    if (mf && typeof mf.setValue === 'function') {
+      mf.setValue(state.initialLatex || '');
+    } else if (mf) {
+      mf.value = state.initialLatex || '';
+    }
+    setTimeout(() => { if (mf && mf.focus) mf.focus(); }, 80);
+  };
+  modal.classList.add('open');
+  if (typeof customElements !== 'undefined' && customElements.get && customElements.get('math-field')) {
+    mountField();
+  } else {
+    // MathLive 로드 대기
+    let tries = 0;
+    const wait = setInterval(() => {
+      tries++;
+      if (typeof customElements !== 'undefined' && customElements.get && customElements.get('math-field')) {
+        clearInterval(wait);
+        mountField();
+      } else if (tries > 50) {
+        clearInterval(wait);
+        mountField();
+      }
+    }, 100);
+  }
+}
+
+function closeMathEditor() {
+  const modal = document.getElementById('math-editor-modal');
+  if (modal) modal.classList.remove('open');
+  _mathEditorState = null;
+}
+
+function confirmMathEditor() {
+  const mf = document.getElementById('math-editor-field');
+  let latex = '';
+  if (mf) {
+    if (typeof mf.getValue === 'function') latex = mf.getValue('latex') || '';
+    else latex = mf.value || '';
+  }
+  latex = (latex || '').trim();
+  const state = _mathEditorState;
+  if (!latex) { closeMathEditor(); return; }
+  if (!state || !state.editor) { closeMathEditor(); return; }
+  if (latex.length > _MATH_LATEX_MAX) latex = latex.slice(0, _MATH_LATEX_MAX);
+  const editor = state.editor;
+  const span = document.createElement('span');
+  span.className = 'math';
+  span.setAttribute('data-latex', latex);
+  span.setAttribute('contenteditable', 'false');
+  if (state.editingSpan) {
+    state.editingSpan.replaceWith(span);
+  } else if (state.savedRange) {
+    state.savedRange.deleteContents();
+    state.savedRange.insertNode(span);
+    // 수식 뒤에 공백 추가하고 커서를 그 뒤로 이동
+    const space = document.createTextNode(' ');
+    if (span.parentNode) span.parentNode.insertBefore(space, span.nextSibling);
+    const newRange = document.createRange();
+    newRange.setStart(space, 1);
+    newRange.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+  } else {
+    editor.appendChild(span);
+  }
+  renderMathIn(editor);
+  // 빈 상태 표시 갱신용 input 이벤트 발생
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  closeMathEditor();
+  editor.focus();
+}
+
+function deleteMathEditor() {
+  const state = _mathEditorState;
+  if (!state || !state.editingSpan) { closeMathEditor(); return; }
+  const editor = state.editor;
+  state.editingSpan.remove();
+  if (editor) editor.dispatchEvent(new Event('input', { bubbles: true }));
+  closeMathEditor();
+  if (editor) editor.focus();
+}
+
+// 활동 연구 에디터 안의 수식 span을 더블클릭하면 편집 모드로 진입
+document.addEventListener('dblclick', function(e) {
+  const span = e.target && e.target.closest && e.target.closest('span.math');
+  if (!span) return;
+  const editor = span.closest('.act-research');
+  if (!editor || !editor.isContentEditable) return;
+  e.preventDefault();
+  const range = document.createRange();
+  range.selectNode(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  _openMathModal({
+    editor,
+    savedRange: range,
+    editingSpan: span,
+    initialLatex: span.getAttribute('data-latex') || ''
+  });
+});
+
+// 모달 배경 클릭으로 닫기 + 프리셋 버튼 → 입력란에 LaTeX 추가
+document.addEventListener('click', function(e) {
+  // 배경 클릭
+  const modal = document.getElementById('math-editor-modal');
+  if (modal && e.target === modal) {
+    closeMathEditor();
+    return;
+  }
+  // 프리셋 버튼 클릭
+  const preset = e.target && e.target.closest && e.target.closest('.math-preset-btn');
+  if (preset) {
+    const latex = preset.getAttribute('data-latex') || '';
+    const mf = document.getElementById('math-editor-field');
+    if (mf && typeof mf.executeCommand === 'function') {
+      try { mf.executeCommand(['insert', latex]); }
+      catch(_) { mf.value = (mf.value || '') + latex; }
+    } else if (mf) {
+      mf.value = (mf.value || '') + latex;
+    }
+    if (mf && mf.focus) mf.focus();
+  }
+});
+
+// ESC로 모달 닫기
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('math-editor-modal');
+    if (modal && modal.classList.contains('open')) {
+      e.preventDefault();
+      closeMathEditor();
+    }
+  }
+});
 
 function applyResearchFormat(btn, cmd, value) {
   const wrap = btn.closest('.activity-editor');
@@ -2877,6 +3144,8 @@ function buildResearchToolbarHtml() {
       <button type="button" class="rt-clear" title="형광펜 제거" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'hiliteColor','')">없음</button>
       <span class="rt-sep"></span>
       <button type="button" class="rt-clear" title="모든 서식 제거" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'removeFormat')">서식 지우기</button>
+      <span class="rt-sep"></span>
+      <button type="button" class="rt-clear" title="수식 삽입" onmousedown="event.preventDefault()" onclick="openMathEditorForResearch(this)" style="color:#FF6B9D;font-weight:700">∑ 수식</button>
     </div>`;
 }
 
@@ -2946,6 +3215,7 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
   const researchEditor = div.querySelector('.act-research');
   if (researchEditor) {
     researchEditor.innerHTML = researchToDisplayHtml(research);
+    _scheduleMathRender(researchEditor);
     updateResearchEmpty(researchEditor);
     researchEditor.addEventListener('input', () => updateResearchEmpty(researchEditor));
     researchEditor.addEventListener('blur', () => updateResearchEmpty(researchEditor));
@@ -3859,6 +4129,7 @@ function renderSlide() {
 
   const areaEl = document.getElementById('slide-area');
   areaEl.innerHTML = html;
+  _scheduleMathRender(areaEl);
   // [수정] transform 자동 축소 대신 슬라이드 영역에서 자연 스크롤 — 새 슬라이드는 항상 맨 위부터 보이게
   areaEl.scrollTop = 0;
 }
@@ -4546,7 +4817,7 @@ function init() {
     if (!ALL_LEVELS.includes(lv)) opts += `<option value="${lv}">${lv}</option>`;
   });
   document.getElementById('ed-level').innerHTML = opts;
-  
+
   addActivityEditor();
   renderDashboard();
 }
@@ -4602,6 +4873,8 @@ function printLesson(idx) {
 <title>${l.title}</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='fg' x1='0.75' y1='0' x2='0.15' y2='1'%3E%3Cstop offset='0%25' stop-color='%23E879A0'/%3E%3Cstop offset='55%25' stop-color='%23A855F7'/%3E%3Cstop offset='100%25' stop-color='%235B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z' fill='url(%23fg)'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <style>
   @page { size: A4; margin: 14mm 18mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -4757,7 +5030,37 @@ function printLesson(idx) {
     <span>출력일: ${new Date().toLocaleDateString('ko-KR')}</span>
   </div>
 
-  <script>window.onload = function(){ window.print(); }<\/script>
+  <script>
+    function _renderPrintMath(){
+      if (typeof katex === 'undefined') return false;
+      document.querySelectorAll('span.math[data-latex]').forEach(function(el){
+        if (el.dataset.rendered === '1') return;
+        try { katex.render(el.getAttribute('data-latex')||'', el, {throwOnError:false, displayMode:false, output:'html'}); el.dataset.rendered='1'; }
+        catch(e){ el.textContent = el.getAttribute('data-latex')||''; }
+      });
+      return true;
+    }
+    window.onload = function(){
+      // KaTeX 로드 대기 후 렌더링 → 폰트 로드 약간 더 기다리고 인쇄
+      var tries = 0;
+      var iv = setInterval(function(){
+        tries++;
+        if (_renderPrintMath()) {
+          clearInterval(iv);
+          // 폰트 로딩 시간 확보
+          var go = function(){ try { window.print(); } catch(_){} };
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function(){ setTimeout(go, 150); });
+          } else {
+            setTimeout(go, 400);
+          }
+        } else if (tries > 50) {
+          clearInterval(iv);
+          window.print();
+        }
+      }, 100);
+    };
+  <\/script>
 </body>
 </html>`;
 
@@ -4770,6 +5073,37 @@ function printLesson(idx) {
 <!-- 버전 표시 -->
 <div id="app-version-bar" style="position:fixed;bottom:0;left:0;right:0;background:rgba(15,10,40,0.75);backdrop-filter:blur(6px);color:rgba(255,255,255,0.45);font-size:11px;text-align:center;padding:5px 0;z-index:8000;letter-spacing:.04em;pointer-events:none">
   Semini &nbsp;·&nbsp; <span id="version-center-name"></span>&nbsp;·&nbsp; v5.0 &nbsp;·&nbsp; 2026
+</div>
+
+<!-- 수식 편집 모달 -->
+<div id="math-editor-modal" role="dialog" aria-label="수식 편집">
+  <div class="math-modal-box">
+    <div class="math-modal-title">∑ 수식 입력</div>
+    <div class="math-modal-hint">아래 입력창을 클릭하면 가상 키보드가 나와요. 분수 ▭/▭, 제곱 ▭², 루트 √▭ 같은 버튼으로 수식을 만들 수 있고, 키보드로 직접 LaTeX 입력도 가능해요.</div>
+    <div class="math-modal-presets">
+      <button type="button" class="math-preset-btn" data-latex="\frac{a}{b}">분수 a/b</button>
+      <button type="button" class="math-preset-btn" data-latex="x^{2}">제곱 x²</button>
+      <button type="button" class="math-preset-btn" data-latex="\sqrt{x}">루트 √x</button>
+      <button type="button" class="math-preset-btn" data-latex="\sqrt[3]{x}">세제곱근</button>
+      <button type="button" class="math-preset-btn" data-latex="\sum_{k=1}^{n}k">시그마</button>
+      <button type="button" class="math-preset-btn" data-latex="\int_{a}^{b}f(x)dx">적분</button>
+      <button type="button" class="math-preset-btn" data-latex="\pi">π</button>
+      <button type="button" class="math-preset-btn" data-latex="\theta">θ</button>
+      <button type="button" class="math-preset-btn" data-latex="\leq">≤</button>
+      <button type="button" class="math-preset-btn" data-latex="\geq">≥</button>
+      <button type="button" class="math-preset-btn" data-latex="\neq">≠</button>
+      <button type="button" class="math-preset-btn" data-latex="\times">×</button>
+      <button type="button" class="math-preset-btn" data-latex="\div">÷</button>
+    </div>
+    <div class="math-modal-field-wrap">
+      <math-field id="math-editor-field"></math-field>
+    </div>
+    <div class="math-modal-buttons">
+      <button type="button" class="math-btn-delete" id="math-btn-delete" style="display:none" onclick="deleteMathEditor()">🗑️ 수식 삭제</button>
+      <button type="button" class="math-btn-cancel" onclick="closeMathEditor()">취소</button>
+      <button type="button" class="math-btn-confirm" onclick="confirmMathEditor()">삽입</button>
+    </div>
+  </div>
 </div>
 
 </body>
