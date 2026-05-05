@@ -575,5 +575,21 @@ span.math:hover{background:rgba(255,107,157,.12);outline:1px dashed rgba(255,107
 .math-btn-cancel:hover{background:#f5f5f5}
 .math-btn-confirm{padding:9px 20px;border:none;background:linear-gradient(135deg,#FF6B9D,#FF8E6E);color:#fff;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(255,107,157,.3)}
 .math-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(255,107,157,.4)}
+
+/* ── 라이브러리 사고력/교과 탭 ── */
+.lib-type-tabs{display:flex;gap:6px;margin-bottom:16px}
+.lib-tab{padding:9px 22px;border-radius:30px;border:2px solid #FFD0E2;background:#fff;color:#A0887D;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.lib-tab:hover{border-color:#FF6B9D;color:#FF6B9D}
+.lib-tab.active{background:linear-gradient(135deg,#FF6B9D,#FF8E6E);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(255,107,157,.35)}
+
+/* ── 에디터 교안 유형 토글 ── */
+.lesson-type-toggle{display:flex;gap:6px;margin-top:6px}
+.lesson-type-btn{padding:8px 22px;border-radius:30px;border:2px solid #E5E7EB;background:#fff;color:#6B7280;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.lesson-type-btn:hover{border-color:#FF6B9D;color:#FF6B9D}
+.lesson-type-btn.active{background:linear-gradient(135deg,#FF6B9D,#FF8E6E);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(255,107,157,.3)}
+
+/* ── 교과 뱃지 ── */
+.badge-gyogwa-grade{background:#E0F2FE;color:#0369A1;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
+.badge-gyogwa-unit{background:#F0FDF4;color:#166534;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
 .math-btn-delete{padding:9px 14px;border:1px solid #FF6B6B;background:#fff;color:#FF6B6B;border-radius:10px;cursor:pointer;font-size:13px;margin-right:auto}
 .math-btn-delete:hover{background:#FFF0F0}

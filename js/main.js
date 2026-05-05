@@ -2,6 +2,42 @@ function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── 교안 유형 토글 (사고력 / 교과) ──
+function setLessonType(type) {
+  document.getElementById('ed-lesson-type').value = type;
+  const isGyogwa = type === '교과';
+  document.getElementById('type-btn-사고력').classList.toggle('active', !isGyogwa);
+  document.getElementById('type-btn-교과').classList.toggle('active', isGyogwa);
+  document.getElementById('ed-sagoryeok-fields').style.display = isGyogwa ? 'none' : '';
+  document.getElementById('ed-gyogwa-fields').style.display = isGyogwa ? '' : 'none';
+  document.getElementById('ed-sagoryeok-extra').style.display = isGyogwa ? 'none' : 'grid';
+  // 교과 탭일 때 학년 select 초기화
+  if (isGyogwa) {
+    const gradeEl = document.getElementById('ed-gyogwa-grade');
+    if (gradeEl.options.length <= 1) {
+      CURRICULUM_GRADE_ORDER.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g; opt.textContent = g;
+        gradeEl.appendChild(opt);
+      });
+    }
+  }
+}
+
+// 학년/학기 변경 시 단원 select 갱신
+function updateGyogwaUnits(selectUnit) {
+  const grade = document.getElementById('ed-gyogwa-grade').value;
+  const units = (grade && CURRICULUM_UNITS[grade]) || [];
+  const unitEl = document.getElementById('ed-gyogwa-unit');
+  unitEl.innerHTML = '<option value="">단원 선택</option>';
+  units.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u; opt.textContent = u;
+    if (selectUnit && u === selectUnit) opt.selected = true;
+    unitEl.appendChild(opt);
+  });
+}
+
 // 활동 에디터의 + 추가 버튼 → 그 활동의 act-links 안에 한 행 추가
 function addActLinkRow(btn) {
   const editor = btn.closest('.activity-editor');
@@ -80,18 +116,23 @@ async function saveLesson() {
   });
   
   const lessonId = document.getElementById('ed-id').value || 'custom_' + Date.now();
+  const lessonType = document.getElementById('ed-lesson-type').value || '사고력';
+  const isGyogwa = lessonType === '교과';
   // 기존 교안이면 center/author_email 원본 유지
   const existingLesson = _state.customLessons.find(c => c.id === lessonId);
   const lesson = {
     id: lessonId,
+    lesson_type: lessonType,
     title,
     author: document.getElementById('ed-author').value.trim(),
     author_email: existingLesson ? (existingLesson.author_email || getCurrentEmail()) : getCurrentEmail(),
-    level: document.getElementById('ed-level').value,
+    level: isGyogwa ? (document.getElementById('ed-gyogwa-grade').value || '') : document.getElementById('ed-level').value,
+    gyogwa_grade: isGyogwa ? document.getElementById('ed-gyogwa-grade').value : '',
+    gyogwa_unit: isGyogwa ? document.getElementById('ed-gyogwa-unit').value : '',
     objectives: document.getElementById('ed-objectives').value.trim(),
     teacher_objectives: document.getElementById('ed-teacher-obj').value.trim(),
-    curriculum: document.getElementById('ed-curriculum').value.trim(),
-    cms_link: document.getElementById('ed-cms').value.trim(),
+    curriculum: isGyogwa ? '' : document.getElementById('ed-curriculum').value.trim(),
+    cms_link: isGyogwa ? '' : document.getElementById('ed-cms').value.trim(),
     notes: document.getElementById('ed-notes').value.trim(),
     textbook_images: Array.from(document.querySelectorAll('#ed-textbook-imgs .img-thumb')).map(t => t.dataset.src).filter(Boolean),
     attachments: Array.from(document.querySelectorAll('#ed-attachments .attach-item[data-url]')).map(el => ({
@@ -160,6 +201,9 @@ function resetEditor() {
   document.getElementById('ed-curriculum').value = '';
   document.getElementById('ed-cms').value = '';
   document.getElementById('ed-notes').value = '';
+  setLessonType('사고력');
+  document.getElementById('ed-gyogwa-grade').value = '';
+  document.getElementById('ed-gyogwa-unit').innerHTML = '<option value="">단원 선택</option>';
   document.getElementById('ed-textbook-imgs').innerHTML = '';
   updateTextbookHint();
   document.getElementById('ed-attachments').innerHTML = '';
@@ -185,7 +229,13 @@ function loadLessonToEditor(id, isCustom) {
   document.getElementById('ed-id').value = isMineLoad ? l.id : '';
   document.getElementById('ed-title').value = l.title || '';
   document.getElementById('ed-author').value = l.author || '';
+  // 교안 유형 설정
+  setLessonType(l.lesson_type || '사고력');
   document.getElementById('ed-level').value = l.level || '';
+  if (l.lesson_type === '교과') {
+    document.getElementById('ed-gyogwa-grade').value = l.gyogwa_grade || '';
+    updateGyogwaUnits(l.gyogwa_unit || '');
+  }
   document.getElementById('ed-objectives').value = l.objectives || '';
   document.getElementById('ed-teacher-obj').value = l.teacher_objectives || '';
   document.getElementById('ed-curriculum').value = l.curriculum || '';
@@ -235,7 +285,12 @@ function editCustomLesson(id) {
   document.getElementById('ed-id').value = isMine ? l.id : '';
   document.getElementById('ed-title').value = l.title;
   document.getElementById('ed-author').value = l.author;
+  setLessonType(l.lesson_type || '사고력');
   document.getElementById('ed-level').value = l.level;
+  if (l.lesson_type === '교과') {
+    document.getElementById('ed-gyogwa-grade').value = l.gyogwa_grade || '';
+    updateGyogwaUnits(l.gyogwa_unit || '');
+  }
   document.getElementById('ed-objectives').value = l.objectives;
   document.getElementById('ed-teacher-obj').value = l.teacher_objectives || '';
   document.getElementById('ed-curriculum').value = l.curriculum;
@@ -744,10 +799,12 @@ function printLesson(idx) {
 </head>
 <body>
   <div class="doc-header">
-    <div class="doc-center">CMS 사고력수학 WP 사고력관 · 사고력 세미나 수업 연구 자료</div>
+    <div class="doc-center">${l.lesson_type === '교과' ? 'CMS 교과 수업 연구 자료' : 'CMS 사고력수학 WP 사고력관 · 사고력 세미나 수업 연구 자료'}</div>
     <div class="doc-title">${l.title}</div>
     <div class="doc-meta">
-      <span class="doc-badge badge-level">${l.level}</span>
+      ${l.lesson_type === '교과'
+        ? `${l.gyogwa_grade ? `<span class="doc-badge badge-level">${l.gyogwa_grade}</span>` : ''}${l.gyogwa_unit ? `<span class="doc-badge badge-level" style="background:#E0F2FE;color:#0369A1">${l.gyogwa_unit}</span>` : ''}`
+        : `<span class="doc-badge badge-level">${l.level}</span>`}
       ${l.author ? `<span class="doc-badge badge-author">${l.author}</span>` : ''}
     </div>
   </div>

@@ -1,27 +1,30 @@
+// ── 라이브러리 탭 상태 (사고력 / 교과) ──
+let _currentLibraryTab = '사고력';
+
+function setLibraryTab(tab) {
+  _currentLibraryTab = tab;
+  document.getElementById('lib-tab-사고력').classList.toggle('active', tab === '사고력');
+  document.getElementById('lib-tab-교과').classList.toggle('active', tab === '교과');
+  currentLevel = '';
+  filterLessons();
+}
+
 function renderLibrary() {
   const allLessons = getAllLessons();
-  const levels = sortLevels([...new Set(allLessons.map(l => l.level))]);
-  
-  // Level chips
-  let chips = `<div class="chip ${!currentLevel?'active':''}" onclick="currentLevel='';filterLessons()">전체</div>`;
-  levels.forEach(lv => {
-    chips += `<div class="chip ${currentLevel===lv?'active':''}" onclick="currentLevel='${lv}';filterLessons()">${lv}</div>`;
-  });
-  document.getElementById('level-chips').innerHTML = chips;
-  
+
   // Author filter (정규화된 이름으로 중복 제거)
-  const authorNormMap = {}; // normalizedName → 대표 표시 이름
+  const authorNormMap = {};
   allLessons.forEach(l => {
     if (!l.author) return;
     const norm = normalizeName(l.author);
-    if (!authorNormMap[norm]) authorNormMap[norm] = norm; // 정규화 이름을 대표로
+    if (!authorNormMap[norm]) authorNormMap[norm] = norm;
   });
   const normalizedAuthors = Object.keys(authorNormMap).sort((a,b) => a.localeCompare(b,'ko'));
   const myName = normalizeName(sessionStorage.getItem('cms_name') || '');
   let authHtml = '<option value="">전체 작성자</option>';
   normalizedAuthors.forEach(norm => { authHtml += `<option value="${norm}"${norm===myName?' selected':''}>${norm}</option>`; });
   document.getElementById('author-filter').innerHTML = authHtml;
-  
+
   filterLessons();
 }
 
@@ -102,13 +105,20 @@ function filterLessons() {
   const query = document.getElementById('search-input').value.toLowerCase();
   const author = document.getElementById('author-filter').value;
   const allLessons = getAllLessons();
-  
+  const isGyogwaTab = _currentLibraryTab === '교과';
+
   let filtered = allLessons.filter(l => {
-    if (currentLevel && l.level !== currentLevel) return false;
+    // ── 탭 필터: lesson_type 없으면 사고력으로 간주 (하위 호환) ──
+    const type = l.lesson_type || '사고력';
+    if (type !== _currentLibraryTab) return false;
+
+    if (isGyogwaTab) {
+      // 교과 탭: currentLevel에 학년/학기 코드를 재사용
+      if (currentLevel && l.gyogwa_grade !== currentLevel) return false;
+    } else {
+      if (currentLevel && l.level !== currentLevel) return false;
+    }
     if (author && normalizeName(l.author) !== author) return false;
-    // [신규] 테마 필터: 인덱스에서 클릭한 테마와 제목이 정규화 매칭되는 교안만 표시.
-    //   _normalizeThemeKey가 로마자/공백/조사 차이를 흡수하므로 인덱스의 완료 표시
-    //   매칭과 같은 결과가 나온다.
     if (_themeFilter) {
       const themeKey = _normalizeThemeKey(_themeFilter);
       const titleKey = _normalizeThemeKey(l.title);
@@ -116,19 +126,32 @@ function filterLessons() {
     }
     if (query) {
       const searchText = [l.title, l.objectives, l.teacher_objectives, l.notes,
+        l.gyogwa_grade || '', l.gyogwa_unit || '',
         ...l.activities.map(a => a.name + ' ' + researchToPlainText(a.research))
       ].join(' ').toLowerCase();
       if (!searchText.includes(query)) return false;
     }
     return true;
   });
-  
-  // Re-render chips
-  const levels = sortLevels([...new Set(allLessons.map(l => l.level))]);
-  let chips = `<div class="chip ${!currentLevel?'active':''}" onclick="currentLevel='';filterLessons()">전체</div>`;
-  levels.forEach(lv => {
-    chips += `<div class="chip ${currentLevel===lv?'active':''}" onclick="currentLevel='${lv}';filterLessons()">${lv}</div>`;
-  });
+
+  // ── 칩 렌더링: 탭에 따라 레벨 칩 vs 학년 칩 ──
+  let chips = '';
+  if (isGyogwaTab) {
+    // 교과 탭: 학년/학기 칩
+    const usedGrades = [...new Set(allLessons.filter(l=>(l.lesson_type||'사고력')==='교과').map(l=>l.gyogwa_grade).filter(Boolean))];
+    const orderedGrades = CURRICULUM_GRADE_ORDER.filter(g => usedGrades.includes(g));
+    chips = `<div class="chip ${!currentLevel?'active':''}" onclick="currentLevel='';filterLessons()">전체</div>`;
+    orderedGrades.forEach(g => {
+      chips += `<div class="chip ${currentLevel===g?'active':''}" onclick="currentLevel='${g}';filterLessons()">${g}</div>`;
+    });
+  } else {
+    // 사고력 탭: 기존 레벨 칩
+    const levels = sortLevels([...new Set(allLessons.filter(l=>(l.lesson_type||'사고력')==='사고력').map(l=>l.level))]);
+    chips = `<div class="chip ${!currentLevel?'active':''}" onclick="currentLevel='';filterLessons()">전체</div>`;
+    levels.forEach(lv => {
+      chips += `<div class="chip ${currentLevel===lv?'active':''}" onclick="currentLevel='${lv}';filterLessons()">${lv}</div>`;
+    });
+  }
   document.getElementById('level-chips').innerHTML = chips;
   
   let html = '';
@@ -140,11 +163,14 @@ function filterLessons() {
         !['수업 목표','교과 연계','CMS과정 연계'].includes(a.name)
       );
       const lessonIdx = allLessons.indexOf(l);
+    const isGyogwa = (l.lesson_type === '교과');
     html += `<div class="lesson-card" onclick="toggleLesson(this)" data-lesson-id="${l.id}">
         <div class="lesson-card-header">
           <div><div class="lesson-card-title">${highlightText(l.title, query)}</div></div>
           <div class="lesson-card-meta">
-            <span class="badge badge-level">${l.level}</span>
+            ${isGyogwa
+              ? `${l.gyogwa_grade ? `<span class="badge badge-gyogwa-grade">${l.gyogwa_grade}</span>` : ''} ${l.gyogwa_unit ? `<span class="badge badge-gyogwa-unit">${l.gyogwa_unit}</span>` : ''}`
+              : `<span class="badge badge-level">${l.level}</span>`}
             ${l.author ? `<span class="badge badge-author">${l.author}</span>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>

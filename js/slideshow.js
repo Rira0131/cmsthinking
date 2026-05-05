@@ -280,9 +280,12 @@ function renderSlide() {
   let html = '';
   if (s.type === 'title') {
     const l = s.lesson;
+    const slideBadge = l.lesson_type === '교과'
+      ? `${l.gyogwa_grade ? `<span class="slide-badge" style="margin-right:6px">${escHtml(l.gyogwa_grade)}</span>` : ''}${l.gyogwa_unit ? `<span class="slide-badge" style="background:rgba(96,165,250,.25)">${escHtml(l.gyogwa_unit)}</span>` : ''}`
+      : `<span class="slide-badge">${l.level || '사고력수학'}</span>`;
     html = `
       <div class="slide-title-card">
-        <div class="slide-badge">${l.level || '사고력수학'}</div>
+        <div>${slideBadge}</div>
         <h1>${escHtml(l.title)}</h1>
         ${l.objectives ? `<div class="slide-objectives"><strong style="color:#a5b4fc;display:block;margin-bottom:10px;font-size:14px">📎 수업 목표</strong>${escHtml(l.objectives)}</div>` : ''}
         ${l.teacher_objectives ? `<div class="slide-objectives" style="margin-top:12px"><strong style="color:#a5b4fc;display:block;margin-bottom:10px;font-size:14px">🎯 교사 목표</strong>${escHtml(l.teacher_objectives)}</div>` : ''}

@@ -199,6 +199,11 @@
         <h2>수업 연구 자료</h2>
         <p>레벨별 수업 연구 자료를 검색하고 확인하세요</p>
       </div>
+      <!-- 사고력/교과 탭 -->
+      <div class="lib-type-tabs">
+        <button class="lib-tab active" id="lib-tab-사고력" onclick="setLibraryTab('사고력')">🧠 사고력 연구자료</button>
+        <button class="lib-tab" id="lib-tab-교과" onclick="setLibraryTab('교과')">📚 교과 연구자료</button>
+      </div>
       <div class="search-bar">
         <input type="text" class="search-input" id="search-input" placeholder="테마명, 활동명, 내용으로 검색..." oninput="onSearchInput()">
         <select class="filter-select" id="author-filter" onchange="filterLessons()">
@@ -247,12 +252,44 @@
       </div>
       <div id="editor-write">
         <div class="card">
+          <!-- 교안 유형 선택 -->
           <div class="form-group">
-            <label class="form-label">레벨</label>
-            <select class="form-select" id="ed-level"></select>
+            <label class="form-label">교안 유형</label>
+            <div class="lesson-type-toggle">
+              <button type="button" class="lesson-type-btn active" id="type-btn-사고력" onclick="setLessonType('사고력')">🧠 사고력</button>
+              <button type="button" class="lesson-type-btn" id="type-btn-교과" onclick="setLessonType('교과')">📚 교과</button>
+            </div>
+            <input type="hidden" id="ed-lesson-type" value="사고력">
           </div>
+
+          <!-- 사고력 전용 필드 -->
+          <div id="ed-sagoryeok-fields">
+            <div class="form-group">
+              <label class="form-label">레벨</label>
+              <select class="form-select" id="ed-level"></select>
+            </div>
+          </div>
+
+          <!-- 교과 전용 필드 -->
+          <div id="ed-gyogwa-fields" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label class="form-label">학년/학기</label>
+                <select class="form-select" id="ed-gyogwa-grade" onchange="updateGyogwaUnits()">
+                  <option value="">학년/학기 선택</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">단원</label>
+                <select class="form-select" id="ed-gyogwa-unit">
+                  <option value="">단원 선택</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label class="form-label">테마명 (제목)</label>
+            <label class="form-label">테마명 / 수업 주제</label>
             <input type="text" class="form-input" id="ed-title" placeholder="예: WHY 10-1-2 동그란 이슬비">
           </div>
           <div class="form-group">
@@ -269,7 +306,8 @@
               <textarea class="form-textarea" id="ed-teacher-obj" placeholder="교사가 추가로 설정한 목표"></textarea>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <!-- 사고력 전용: 교과연계 + CMS연계 -->
+          <div id="ed-sagoryeok-extra" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group">
               <label class="form-label">교과 연계</label>
               <input type="text" class="form-input" id="ed-curriculum" placeholder="예: 2-1 분류하기">
