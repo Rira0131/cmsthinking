@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CMS 사고력 세미나 준비</title>
+<title>Semini</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='fg' x1='0.75' y1='0' x2='0.15' y2='1'%3E%3Cstop offset='0%25' stop-color='%23E879A0'/%3E%3Cstop offset='55%25' stop-color='%23A855F7'/%3E%3Cstop offset='100%25' stop-color='%235B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z' fill='url(%23fg)'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -568,8 +569,15 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 
 <!-- 로딩 화면 -->
 <div id="loading-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#FF6B9D,#FF8E6E,#FFBD59);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;color:#fff">
-  <div style="font-size:40px;margin-bottom:16px">📐</div>
-  <div style="font-size:16px;font-weight:700;margin-bottom:8px">CMS 사고력 세미나</div>
+  <div style="margin-bottom:16px"><svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sg_load" x1="0.75" y1="0" x2="0.15" y2="1">
+    <stop offset="0%" stop-color="#E879A0"/>
+    <stop offset="55%" stop-color="#A855F7"/>
+    <stop offset="100%" stop-color="#5B5CF6"/>
+  </linearGradient></defs>
+  <path d="M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z" fill="url(#sg_load)"/>
+</svg></div>
+  <div style="font-size:16px;font-weight:700;margin-bottom:8px">Semini</div>
   <div id="load-msg" style="font-size:13px;opacity:.8">데이터를 불러오는 중...</div>
   <div style="margin-top:20px;width:200px;height:4px;background:rgba(255,255,255,.3);border-radius:4px;overflow:hidden">
     <div id="load-bar" style="width:0%;height:100%;background:#fff;border-radius:4px;transition:width .4s"></div>
@@ -579,8 +587,15 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 <!-- 로그인 화면 -->
 <div id="login-overlay" style="display:none">
   <div id="login-box">
-    <div id="login-logo">📐</div>
-    <h2>CMS 사고력 세미나</h2>
+    <div id="login-logo"><svg width="48" height="48" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sg_login" x1="0.75" y1="0" x2="0.15" y2="1">
+    <stop offset="0%" stop-color="#E879A0"/>
+    <stop offset="55%" stop-color="#A855F7"/>
+    <stop offset="100%" stop-color="#5B5CF6"/>
+  </linearGradient></defs>
+  <path d="M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z" fill="url(#sg_login)"/>
+</svg></div>
+    <h2>Semini</h2>
     <p>WP 사고력관 · 선생님 전용</p>
     <div style="position:relative;margin-bottom:10px">
       <input type="text" id="id-input" autocomplete="off" placeholder="이메일 입력 (예: ysh@mjcms.com)" style="width:100%;padding:12px 16px;border:2px solid #E5E7EB;border-radius:10px;font-size:15px;text-align:left;outline:none;font-family:inherit;transition:border .2s;box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('pw-input').focus()">
@@ -594,7 +609,13 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 <div class="app" id="main-app" style="display:none">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1>📐 CMS 사고력 세미나</h1>
+      <h1 style="display:flex;align-items:center;gap:10px"><svg width="28" height="28" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+  <defs><linearGradient id="sg_side" x1="0.75" y1="0" x2="0.15" y2="1">
+    <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+    <stop offset="100%" stop-color="rgba(255,255,255,0.7)"/>
+  </linearGradient></defs>
+  <path d="M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z" fill="url(#sg_side)"/>
+</svg>Semini</h1>
       <p id="center-name-tag">사고력관</p>
       <div id="my-name-tag" style="margin-top:8px;font-size:12px;background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 12px;display:inline-block;color:rgba(255,255,255,0.9)"></div>
     </div>
@@ -4579,6 +4600,7 @@ function printLesson(idx) {
 <head>
 <meta charset="UTF-8">
 <title>${l.title}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='fg' x1='0.75' y1='0' x2='0.15' y2='1'%3E%3Cstop offset='0%25' stop-color='%23E879A0'/%3E%3Cstop offset='55%25' stop-color='%23A855F7'/%3E%3Cstop offset='100%25' stop-color='%235B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,2 C28,18 18,28 2,30 C18,32 28,42 30,58 C32,42 42,32 58,30 C42,28 32,18 30,2 Z' fill='url(%23fg)'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 14mm 18mm; }
@@ -4747,7 +4769,7 @@ function printLesson(idx) {
 
 <!-- 버전 표시 -->
 <div id="app-version-bar" style="position:fixed;bottom:0;left:0;right:0;background:rgba(15,10,40,0.75);backdrop-filter:blur(6px);color:rgba(255,255,255,0.45);font-size:11px;text-align:center;padding:5px 0;z-index:8000;letter-spacing:.04em;pointer-events:none">
-  CMS 사고력 세미나 앱 &nbsp;·&nbsp; <span id="version-center-name"></span>&nbsp;·&nbsp; v5.0 &nbsp;·&nbsp; 2026
+  Semini &nbsp;·&nbsp; <span id="version-center-name"></span>&nbsp;·&nbsp; v5.0 &nbsp;·&nbsp; 2026
 </div>
 
 </body>
