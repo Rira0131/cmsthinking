@@ -230,18 +230,34 @@
     <!-- Editor -->
     <section class="page" id="page-curriculum">
       <div class="page-header">
-        <h2>🗂️ 전체 레벨별 인덱스</h2>
-        <p>CMS 사고력수학 전체 테마 목록 — 셀 클릭 시 자료실에서 검색</p>
+        <h2>🗂️ 전체 인덱스</h2>
+        <p>사고력·교과 전체 단원 목록 — 셀 클릭 시 자료실에서 검색</p>
       </div>
-      <input type="text" class="curr-search" id="curr-search-input" placeholder="테마명으로 필터링... (예: 무한, 도형)" oninput="renderCurriculumIndex()">
-      <div class="curr-legend">
-        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#fff;border:1px solid var(--gray-200)"></span>자료 없음</span>
-        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#FFFAE8;border-color:#FFD93D"></span>일부 작성됨</span>
-        <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#E8FAF0;border-color:#2ECC71"></span>모두 작성됨</span>
-        <span class="curr-legend-item"><span style="color:var(--green);font-weight:700">●</span> 자료 있는 테마</span>
-        <span class="curr-legend-item"><span style="color:#DC2626;font-weight:700">신규</span> 2022 신규/변경 테마</span>
+      <!-- 사고력/교과 탭 -->
+      <div class="lib-type-tabs" style="margin-bottom:14px">
+        <button class="lib-tab active" id="curr-tab-사고력" onclick="setCurriculumTab('사고력')">🧠 사고력 인덱스</button>
+        <button class="lib-tab" id="curr-tab-교과" onclick="setCurriculumTab('교과')">📚 교과 인덱스</button>
       </div>
-      <div id="curriculum-grid"></div>
+      <!-- 사고력 인덱스 -->
+      <div id="curr-sagoryeok-panel">
+        <input type="text" class="curr-search" id="curr-search-input" placeholder="테마명으로 필터링... (예: 무한, 도형)" oninput="renderCurriculumIndex()">
+        <div class="curr-legend">
+          <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#fff;border:1px solid var(--gray-200)"></span>자료 없음</span>
+          <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#FFFAE8;border-color:#FFD93D"></span>일부 작성됨</span>
+          <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#E8FAF0;border-color:#2ECC71"></span>모두 작성됨</span>
+          <span class="curr-legend-item"><span style="color:var(--green);font-weight:700">●</span> 자료 있는 테마</span>
+          <span class="curr-legend-item"><span style="color:#DC2626;font-weight:700">신규</span> 2022 신규/변경 테마</span>
+        </div>
+        <div id="curriculum-grid"></div>
+      </div>
+      <!-- 교과 인덱스 -->
+      <div id="curr-gyogwa-panel" style="display:none">
+        <div class="curr-legend" style="margin-bottom:14px">
+          <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#fff;border:1px solid var(--gray-200)"></span>자료 없음</span>
+          <span class="curr-legend-item"><span class="curr-legend-dot" style="background:#E0F2FE;border-color:#38BDF8"></span>자료 있음</span>
+        </div>
+        <div id="gyogwa-curriculum-grid"></div>
+      </div>
     </section>
 
     <section class="page" id="page-editor">

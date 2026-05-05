@@ -203,6 +203,88 @@ function renderCurriculumProgress() {
   container.innerHTML = html;
 }
 
+// ── 교과 인덱스 탭 상태 ──
+let _currentCurriculumTab = '사고력';
+
+function setCurriculumTab(tab) {
+  _currentCurriculumTab = tab;
+  document.getElementById('curr-tab-사고력').classList.toggle('active', tab === '사고력');
+  document.getElementById('curr-tab-교과').classList.toggle('active', tab === '교과');
+  document.getElementById('curr-sagoryeok-panel').style.display = tab === '사고력' ? '' : 'none';
+  document.getElementById('curr-gyogwa-panel').style.display = tab === '교과' ? '' : 'none';
+  if (tab === '교과') renderGyogwaIndex();
+  else renderCurriculumIndex();
+}
+
+// ── 교과 인덱스 렌더 ──
+function renderGyogwaIndex() {
+  const container = document.getElementById('gyogwa-curriculum-grid');
+  if (!container) return;
+
+  const gyogwaLessons = _state.customLessons.filter(l => l.lesson_type === '교과');
+  // 단원별 교안 수 집계
+  const countMap = {};
+  gyogwaLessons.forEach(l => {
+    if (l.gyogwa_grade && l.gyogwa_unit) {
+      const key = l.gyogwa_grade + '§' + l.gyogwa_unit;
+      countMap[key] = (countMap[key] || 0) + 1;
+    }
+  });
+
+  const groups = [
+    { label: '🏫 초등학교', grades: ['초1-1','초1-2','초2-1','초2-2','초3-1','초3-2','초4-1','초4-2','초5-1','초5-2','초6-1','초6-2'] },
+    { label: '🏫 중학교', grades: ['중1-1','중1-2','중2-1','중2-2','중3-1','중3-2'] },
+    { label: '🏫 고등학교 (2015 개정)', grades: ['수학(상)','수학(하)','수학Ⅰ','수학Ⅱ','미적분','확률과 통계','기하'] },
+    { label: '🏫 고등학교 (2022 개정)', grades: ['공통수학1','공통수학2'] },
+  ];
+
+  let html = '';
+  groups.forEach(group => {
+    let rows = '';
+    group.grades.forEach(grade => {
+      const units = CURRICULUM_UNITS[grade] || [];
+      const cells = units.map(unit => {
+        const count = countMap[grade + '§' + unit] || 0;
+        const cls = count > 0 ? 'gyogwa-cell has-lesson' : 'gyogwa-cell';
+        const safeUnit = unit.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        return `<div class="${cls}" onclick="searchByGyogwaUnit('${grade}','${safeUnit}')" title="${grade} · ${unit}">
+          <div class="gyogwa-unit-name">${escHtml(unit)}</div>
+          ${count > 0 ? `<div class="gyogwa-unit-count">${count}개</div>` : ''}
+        </div>`;
+      }).join('');
+      rows += `<div class="gyogwa-grade-row">
+        <div class="gyogwa-grade-label">${grade}</div>
+        <div class="gyogwa-units-wrap">${cells}</div>
+      </div>`;
+    });
+    html += `<div class="gyogwa-section">
+      <div class="gyogwa-section-header">${group.label}</div>
+      ${rows}
+    </div>`;
+  });
+
+  container.innerHTML = html || '<div style="padding:20px;color:var(--gray-500)">교과 교안을 작성하면 여기에 인덱스가 표시됩니다</div>';
+}
+
+// 교과 인덱스 셀 클릭 → 수업 연구 자료 교과 탭으로 이동
+function searchByGyogwaUnit(grade, unit) {
+  if (typeof _currentLibraryTab !== 'undefined') _currentLibraryTab = '교과';
+  if (typeof currentLevel !== 'undefined') currentLevel = grade;
+  if (typeof _gyogwaUnitFilter !== 'undefined') _gyogwaUnitFilter = unit;
+  showPage('library');
+  setTimeout(() => {
+    const libTabSago = document.getElementById('lib-tab-사고력');
+    const libTabGyo  = document.getElementById('lib-tab-교과');
+    if (libTabSago) libTabSago.classList.remove('active');
+    if (libTabGyo)  libTabGyo.classList.add('active');
+    const authorFilter = document.getElementById('author-filter');
+    if (authorFilter) authorFilter.value = '';
+    const inp = document.getElementById('search-input');
+    if (inp) inp.value = '';
+    if (typeof filterLessons === 'function') filterLessons();
+  }, 100);
+}
+
 // Navigation
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -213,7 +295,10 @@ function showPage(page) {
   if (page === 'schedule') renderSchedule();
   if (page === 'library') renderLibrary();
   if (page === 'editor') renderMyLessons();
-  if (page === 'curriculum') renderCurriculumIndex();
+  if (page === 'curriculum') {
+    if (_currentCurriculumTab === '교과') renderGyogwaIndex();
+    else renderCurriculumIndex();
+  }
 }
 
 // Toast

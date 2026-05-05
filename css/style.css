@@ -591,5 +591,18 @@ span.math:hover{background:rgba(255,107,157,.12);outline:1px dashed rgba(255,107
 /* ── 교과 뱃지 ── */
 .badge-gyogwa-grade{background:#E0F2FE;color:#0369A1;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
 .badge-gyogwa-unit{background:#F0FDF4;color:#166534;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
+
+/* ── 교과 인덱스 ── */
+.gyogwa-section{margin-bottom:24px}
+.gyogwa-section-header{font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#0EA5E9,#2563EB);padding:8px 16px;border-radius:10px;margin-bottom:10px}
+.gyogwa-grade-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px 10px;background:#F0F9FF;border-radius:10px;border:1px solid #BAE6FD}
+.gyogwa-grade-label{flex-shrink:0;width:64px;font-size:12px;font-weight:700;color:#0369A1;padding-top:6px;text-align:center}
+.gyogwa-units-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.gyogwa-cell{padding:6px 12px;border-radius:8px;border:1.5px solid #E2E8F0;background:#fff;cursor:pointer;font-size:12px;color:#374151;transition:all .15s;text-align:center;min-width:80px;position:relative}
+.gyogwa-cell:hover{border-color:#38BDF8;background:#F0F9FF;color:#0369A1;transform:translateY(-1px);box-shadow:0 4px 10px rgba(14,165,233,.15)}
+.gyogwa-cell.has-lesson{border-color:#38BDF8;background:#E0F2FE;color:#0369A1}
+.gyogwa-cell.has-lesson:hover{background:#BAE6FD}
+.gyogwa-unit-name{font-weight:600;line-height:1.3}
+.gyogwa-unit-count{font-size:11px;font-weight:700;color:#0284C7;margin-top:2px}
 .math-btn-delete{padding:9px 14px;border:1px solid #FF6B6B;background:#fff;color:#FF6B6B;border-radius:10px;cursor:pointer;font-size:13px;margin-right:auto}
 .math-btn-delete:hover{background:#FFF0F0}

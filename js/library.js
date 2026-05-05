@@ -1,8 +1,10 @@
 // ── 라이브러리 탭 상태 (사고력 / 교과) ──
 let _currentLibraryTab = '사고력';
+let _gyogwaUnitFilter = '';   // 교과 인덱스에서 특정 단원 클릭 시 설정
 
 function setLibraryTab(tab) {
   _currentLibraryTab = tab;
+  _gyogwaUnitFilter = '';
   document.getElementById('lib-tab-사고력').classList.toggle('active', tab === '사고력');
   document.getElementById('lib-tab-교과').classList.toggle('active', tab === '교과');
   currentLevel = '';
@@ -113,8 +115,8 @@ function filterLessons() {
     if (type !== _currentLibraryTab) return false;
 
     if (isGyogwaTab) {
-      // 교과 탭: currentLevel에 학년/학기 코드를 재사용
       if (currentLevel && l.gyogwa_grade !== currentLevel) return false;
+      if (_gyogwaUnitFilter && l.gyogwa_unit !== _gyogwaUnitFilter) return false;
     } else {
       if (currentLevel && l.level !== currentLevel) return false;
     }
@@ -140,9 +142,9 @@ function filterLessons() {
     // 교과 탭: 학년/학기 칩
     const usedGrades = [...new Set(allLessons.filter(l=>(l.lesson_type||'사고력')==='교과').map(l=>l.gyogwa_grade).filter(Boolean))];
     const orderedGrades = CURRICULUM_GRADE_ORDER.filter(g => usedGrades.includes(g));
-    chips = `<div class="chip ${!currentLevel?'active':''}" onclick="currentLevel='';filterLessons()">전체</div>`;
+    chips = `<div class="chip ${!currentLevel?'active':''}" onclick="_gyogwaUnitFilter='';currentLevel='';filterLessons()">전체</div>`;
     orderedGrades.forEach(g => {
-      chips += `<div class="chip ${currentLevel===g?'active':''}" onclick="currentLevel='${g}';filterLessons()">${g}</div>`;
+      chips += `<div class="chip ${currentLevel===g?'active':''}" onclick="_gyogwaUnitFilter='';currentLevel='${g}';filterLessons()">${g}</div>`;
     });
   } else {
     // 사고력 탭: 기존 레벨 칩
