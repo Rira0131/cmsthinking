@@ -221,12 +221,20 @@ function renderGyogwaIndex() {
   const container = document.getElementById('gyogwa-curriculum-grid');
   if (!container) return;
 
-  const gyogwaLessons = _state.customLessons.filter(l => l.lesson_type === '교과');
-  // 단원별 교안 수 집계
+  // HTML 특수문자 이스케이프 (main.js보다 먼저 로드되므로 로컬 정의)
+  function _esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  // onclick에 쓸 단일인용부호 이스케이프
+  function _escQ(s) {
+    return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  }
+
+  const gyogwaLessons = (_state.customLessons || []).filter(function(l){ return l.lesson_type === '교과'; });
   const countMap = {};
-  gyogwaLessons.forEach(l => {
+  gyogwaLessons.forEach(function(l) {
     if (l.gyogwa_grade && l.gyogwa_unit) {
-      const key = l.gyogwa_grade + '§' + l.gyogwa_unit;
+      const key = l.gyogwa_grade + '\u00A7' + l.gyogwa_unit;
       countMap[key] = (countMap[key] || 0) + 1;
     }
   });
@@ -234,33 +242,33 @@ function renderGyogwaIndex() {
   const groups = [
     { label: '🏫 초등학교', grades: ['초1-1','초1-2','초2-1','초2-2','초3-1','초3-2','초4-1','초4-2','초5-1','초5-2','초6-1','초6-2'] },
     { label: '🏫 중학교', grades: ['중1-1','중1-2','중2-1','중2-2','중3-1','중3-2'] },
-    { label: '🏫 고등학교 (2015 개정)', grades: ['수학(상)','수학(하)','수학Ⅰ','수학Ⅱ','미적분','확률과 통계','기하'] },
+    { label: '🏫 고등학교 (2015 개정)', grades: ['수학(상)','수학(하)','수학\u2160','수학\u2161','미적분','확률과 통계','기하'] },
     { label: '🏫 고등학교 (2022 개정)', grades: ['공통수학1','공통수학2'] },
   ];
 
   let html = '';
-  groups.forEach(group => {
+  groups.forEach(function(group) {
     let rows = '';
-    group.grades.forEach(grade => {
-      const units = CURRICULUM_UNITS[grade] || [];
-      const cells = units.map(unit => {
-        const count = countMap[grade + '§' + unit] || 0;
+    group.grades.forEach(function(grade) {
+      const units = (CURRICULUM_UNITS && CURRICULUM_UNITS[grade]) ? CURRICULUM_UNITS[grade] : [];
+      let cells = '';
+      units.forEach(function(unit) {
+        const count = countMap[grade + '\u00A7' + unit] || 0;
         const cls = count > 0 ? 'gyogwa-cell has-lesson' : 'gyogwa-cell';
-        const safeUnit = unit.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        return `<div class="${cls}" onclick="searchByGyogwaUnit('${grade}','${safeUnit}')" title="${grade} · ${unit}">
-          <div class="gyogwa-unit-name">${escHtml(unit)}</div>
-          ${count > 0 ? `<div class="gyogwa-unit-count">${count}개</div>` : ''}
-        </div>`;
-      }).join('');
-      rows += `<div class="gyogwa-grade-row">
-        <div class="gyogwa-grade-label">${grade}</div>
-        <div class="gyogwa-units-wrap">${cells}</div>
-      </div>`;
+        cells += '<div class="' + cls + '" onclick="searchByGyogwaUnit(\'' + _escQ(grade) + '\',\'' + _escQ(unit) + '\')" title="' + _esc(grade) + ' · ' + _esc(unit) + '">'
+          + '<div class="gyogwa-unit-name">' + _esc(unit) + '</div>'
+          + (count > 0 ? '<div class="gyogwa-unit-count">' + count + '개</div>' : '')
+          + '</div>';
+      });
+      rows += '<div class="gyogwa-grade-row">'
+        + '<div class="gyogwa-grade-label">' + _esc(grade) + '</div>'
+        + '<div class="gyogwa-units-wrap">' + cells + '</div>'
+        + '</div>';
     });
-    html += `<div class="gyogwa-section">
-      <div class="gyogwa-section-header">${group.label}</div>
-      ${rows}
-    </div>`;
+    html += '<div class="gyogwa-section">'
+      + '<div class="gyogwa-section-header">' + group.label + '</div>'
+      + rows
+      + '</div>';
   });
 
   container.innerHTML = html || '<div style="padding:20px;color:var(--gray-500)">교과 교안을 작성하면 여기에 인덱스가 표시됩니다</div>';
