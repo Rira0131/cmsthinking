@@ -1,0 +1,17 @@
+# 백업 파일
+*.backup.html
+index_*.html
+
+# 개인 메모 및 임시 파일
+*.md
+!CLAUDE.md
+memo.*
+메모*
+노트*
+tmp/
+temp/
+
+# OS 생성 파일
+desktop.ini
+Thumbs.db
+.DS_Store
