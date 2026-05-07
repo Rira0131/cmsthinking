@@ -339,6 +339,21 @@ function deleteAnyLesson(id, isCustom) {
     if (typeof renderDashboard === 'function') renderDashboard();
   }
 }
+async function _deleteStorageFilesForLesson(l) {
+  if (!l) return;
+  const urls = [];
+  (l.activities || []).forEach(a => (a.images || []).forEach(u => urls.push(u)));
+  (l.textbook_images || []).forEach(u => urls.push(u));
+  (l.attachments || []).forEach(a => a.url && urls.push(a.url));
+  const fileNames = urls
+    .filter(u => u && u.includes(_SB_URL))
+    .map(u => u.split('/').pop().split('?')[0])
+    .filter(n => n);
+  if (fileNames.length === 0) return;
+  try { await _sb.storage.from('lesson-images').remove(fileNames); }
+  catch(e) { console.warn('Storage cleanup 실패:', e); }
+}
+
 async function deleteCustomLesson(id) {
   const l = _state.customLessons.find(c => c.id === id);
   // 관리자는 모든 교안 삭제 가능, 일반 유저는 본인 것만
@@ -347,6 +362,7 @@ async function deleteCustomLesson(id) {
     ? `[관리자] "${l.author || '다른 선생님'}"이 작성한 "${l.title}" 교안을 삭제하시겠습니까?`
     : '정말 삭제하시겠습니까?';
   if (!confirm(msg)) return;
+  await _deleteStorageFilesForLesson(l);
   _state.customLessons = _state.customLessons.filter(c => c.id !== id);
   window._justSaved = Date.now();
   await _sb.from('custom_lessons').delete().eq('id', id);

@@ -39,15 +39,15 @@ async function confirmDrawingModal() {
   if (!_fabricCanvas || !_drawingState) { closeDrawingModal(); return; }
   if (_fabricCanvas.getObjects().length === 0) { closeDrawingModal(); return; }
   const state = _drawingState;
-  const dataUrl = _fabricCanvas.toDataURL({ format: 'png' });
+  const dataUrl = _fabricCanvas.toDataURL('image/jpeg', 0.85);
   closeDrawingModal();
   try {
     const res = await fetch(dataUrl);
     const blob = await res.blob();
-    const fileName = `drawing_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
+    const fileName = `drawing_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
     const { data, error } = await _sb.storage
       .from('lesson-images')
-      .upload(fileName, blob, { contentType: 'image/png', upsert: false });
+      .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
     if (error) throw error;
     const { data: urlData } = _sb.storage.from('lesson-images').getPublicUrl(fileName);
     addImgPreview(state.actId, urlData.publicUrl);
@@ -359,30 +359,36 @@ function insertPresetShape(id) {
     }
 
     case 'penta-prism': {
-      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
-      const f=poly(26,34,50,5,-Math.PI/2), b=f.map(p=>({x:p.x+15,y:p.y-12}));
-      obj=new fabric.Group([new fabric.Polygon(f,O),new fabric.Polygon(b,O),...f.map((p,i)=>new fabric.Line([p.x,p.y,b[i].x,b[i].y],L))]);
+      const f=[{x:34,y:24},{x:59,y:42},{x:49,y:71},{x:19,y:71},{x:9,y:42}];
+      const b=[{x:49,y:12},{x:74,y:30},{x:64,y:59},{x:34,y:59},{x:24,y:30}];
+      const shapes=[new fabric.Polygon(f,O),new fabric.Polygon(b,O)];
+      for(let i=0;i<5;i++) shapes.push(new fabric.Line([f[i].x,f[i].y,b[i].x,b[i].y],L));
+      obj=new fabric.Group(shapes);
       break;
     }
 
     case 'hexa-prism': {
-      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
-      const f=poly(24,32,48,6,0), b=f.map(p=>({x:p.x+16,y:p.y-12}));
-      obj=new fabric.Group([new fabric.Polygon(f,O),new fabric.Polygon(b,O),...f.map((p,i)=>new fabric.Line([p.x,p.y,b[i].x,b[i].y],L))]);
+      const f=[{x:56,y:48},{x:44,y:69},{x:20,y:69},{x:8,y:48},{x:20,y:27},{x:44,y:27}];
+      const b=[{x:72,y:36},{x:60,y:57},{x:36,y:57},{x:24,y:36},{x:36,y:15},{x:60,y:15}];
+      const shapes=[new fabric.Polygon(f,O),new fabric.Polygon(b,O)];
+      for(let i=0;i<6;i++) shapes.push(new fabric.Line([f[i].x,f[i].y,b[i].x,b[i].y],L));
+      obj=new fabric.Group(shapes);
       break;
     }
 
     case 'penta-pyramid': {
-      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
-      const base=poly(24,40,58,5,-Math.PI/2), apex={x:40,y:6};
-      obj=new fabric.Group([new fabric.Polygon(base,O),...base.map(p=>new fabric.Line([apex.x,apex.y,p.x,p.y],L))]);
+      const base=[{x:40,y:35},{x:61,y:50},{x:53,y:75},{x:27,y:75},{x:19,y:50}];
+      const shapes=[new fabric.Polygon(base,O)];
+      for(let i=0;i<5;i++) shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      obj=new fabric.Group(shapes);
       break;
     }
 
     case 'hexa-pyramid': {
-      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
-      const base=poly(24,40,60,6,0), apex={x:40,y:6};
-      obj=new fabric.Group([new fabric.Polygon(base,O),...base.map(p=>new fabric.Line([apex.x,apex.y,p.x,p.y],L))]);
+      const base=[{x:62,y:57},{x:51,y:76},{x:29,y:76},{x:18,y:57},{x:29,y:38},{x:51,y:38}];
+      const shapes=[new fabric.Polygon(base,O)];
+      for(let i=0;i<6;i++) shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      obj=new fabric.Group(shapes);
       break;
     }
 
