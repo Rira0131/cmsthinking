@@ -359,35 +359,54 @@ function insertPresetShape(id) {
     }
 
     case 'penta-prism': {
-      const f=[{x:34,y:24},{x:59,y:42},{x:49,y:71},{x:19,y:71},{x:9,y:42}];
-      const b=[{x:49,y:12},{x:74,y:30},{x:64,y:59},{x:34,y:59},{x:24,y:30}];
-      const shapes=[new fabric.Polygon(f,O),new fabric.Polygon(b,O)];
-      for(let i=0;i<5;i++) shapes.push(new fabric.Line([f[i].x,f[i].y,b[i].x,b[i].y],L));
+      // 위·아래 면을 납작하게 눌러서 입체감 표현 (rx=24, ry=7)
+      const top=[{x:38,y:7},{x:61,y:12},{x:52,y:20},{x:24,y:20},{x:15,y:12}];
+      const bot=[{x:38,y:63},{x:61,y:68},{x:52,y:76},{x:24,y:76},{x:15,y:68}];
+      const shapes=[];
+      for(let i=0;i<5;i++){
+        const ni=(i+1)%5;
+        shapes.push(new fabric.Line([top[i].x,top[i].y,top[ni].x,top[ni].y],L));
+        shapes.push(new fabric.Line([bot[i].x,bot[i].y,bot[ni].x,bot[ni].y],L));
+        shapes.push(new fabric.Line([top[i].x,top[i].y,bot[i].x,bot[i].y],L));
+      }
       obj=new fabric.Group(shapes);
       break;
     }
 
     case 'hexa-prism': {
-      const f=[{x:56,y:48},{x:44,y:69},{x:20,y:69},{x:8,y:48},{x:20,y:27},{x:44,y:27}];
-      const b=[{x:72,y:36},{x:60,y:57},{x:36,y:57},{x:24,y:36},{x:36,y:15},{x:60,y:15}];
-      const shapes=[new fabric.Polygon(f,O),new fabric.Polygon(b,O)];
-      for(let i=0;i<6;i++) shapes.push(new fabric.Line([f[i].x,f[i].y,b[i].x,b[i].y],L));
+      const top=[{x:62,y:14},{x:50,y:20},{x:26,y:20},{x:14,y:14},{x:26,y:8},{x:50,y:8}];
+      const bot=[{x:62,y:70},{x:50,y:76},{x:26,y:76},{x:14,y:70},{x:26,y:64},{x:50,y:64}];
+      const shapes=[];
+      for(let i=0;i<6;i++){
+        const ni=(i+1)%6;
+        shapes.push(new fabric.Line([top[i].x,top[i].y,top[ni].x,top[ni].y],L));
+        shapes.push(new fabric.Line([bot[i].x,bot[i].y,bot[ni].x,bot[ni].y],L));
+        shapes.push(new fabric.Line([top[i].x,top[i].y,bot[i].x,bot[i].y],L));
+      }
       obj=new fabric.Group(shapes);
       break;
     }
 
     case 'penta-pyramid': {
       const base=[{x:40,y:35},{x:61,y:50},{x:53,y:75},{x:27,y:75},{x:19,y:50}];
-      const shapes=[new fabric.Polygon(base,O)];
-      for(let i=0;i<5;i++) shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      const shapes=[];
+      for(let i=0;i<5;i++){
+        const ni=(i+1)%5;
+        shapes.push(new fabric.Line([base[i].x,base[i].y,base[ni].x,base[ni].y],L));
+        shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      }
       obj=new fabric.Group(shapes);
       break;
     }
 
     case 'hexa-pyramid': {
       const base=[{x:62,y:57},{x:51,y:76},{x:29,y:76},{x:18,y:57},{x:29,y:38},{x:51,y:38}];
-      const shapes=[new fabric.Polygon(base,O)];
-      for(let i=0;i<6;i++) shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      const shapes=[];
+      for(let i=0;i<6;i++){
+        const ni=(i+1)%6;
+        shapes.push(new fabric.Line([base[i].x,base[i].y,base[ni].x,base[ni].y],L));
+        shapes.push(new fabric.Line([40,6,base[i].x,base[i].y],L));
+      }
       obj=new fabric.Group(shapes);
       break;
     }
