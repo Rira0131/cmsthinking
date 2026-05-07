@@ -359,9 +359,9 @@ function insertPresetShape(id) {
     }
 
     case 'penta-prism': {
-      // 위·아래 면을 납작하게 눌러서 입체감 표현 (rx=24, ry=7)
-      const top=[{x:38,y:7},{x:61,y:12},{x:52,y:20},{x:24,y:20},{x:15,y:12}];
-      const bot=[{x:38,y:63},{x:61,y:68},{x:52,y:76},{x:24,y:76},{x:15,y:68}];
+      // 위·아래 면을 납작하게 눌러서 입체감 표현 (rx=24, ry=10)
+      const top=[{x:38,y:7},{x:61,y:14},{x:52,y:25},{x:24,y:25},{x:15,y:14}];
+      const bot=[{x:38,y:58},{x:61,y:65},{x:52,y:76},{x:24,y:76},{x:15,y:65}];
       const shapes=[];
       for(let i=0;i<5;i++){
         const ni=(i+1)%5;
@@ -374,8 +374,8 @@ function insertPresetShape(id) {
     }
 
     case 'hexa-prism': {
-      const top=[{x:62,y:14},{x:50,y:20},{x:26,y:20},{x:14,y:14},{x:26,y:8},{x:50,y:8}];
-      const bot=[{x:62,y:70},{x:50,y:76},{x:26,y:76},{x:14,y:70},{x:26,y:64},{x:50,y:64}];
+      const top=[{x:62,y:17},{x:50,y:26},{x:26,y:26},{x:14,y:17},{x:26,y:8},{x:50,y:8}];
+      const bot=[{x:62,y:68},{x:50,y:77},{x:26,y:77},{x:14,y:68},{x:26,y:59},{x:50,y:59}];
       const shapes=[];
       for(let i=0;i<6;i++){
         const ni=(i+1)%6;
