@@ -358,6 +358,34 @@ function insertPresetShape(id) {
       break;
     }
 
+    case 'penta-prism': {
+      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
+      const f=poly(26,34,50,5,-Math.PI/2), b=f.map(p=>({x:p.x+15,y:p.y-12}));
+      obj=new fabric.Group([new fabric.Polygon(f,O),new fabric.Polygon(b,O),...f.map((p,i)=>new fabric.Line([p.x,p.y,b[i].x,b[i].y],L))]);
+      break;
+    }
+
+    case 'hexa-prism': {
+      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
+      const f=poly(24,32,48,6,0), b=f.map(p=>({x:p.x+16,y:p.y-12}));
+      obj=new fabric.Group([new fabric.Polygon(f,O),new fabric.Polygon(b,O),...f.map((p,i)=>new fabric.Line([p.x,p.y,b[i].x,b[i].y],L))]);
+      break;
+    }
+
+    case 'penta-pyramid': {
+      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
+      const base=poly(24,40,58,5,-Math.PI/2), apex={x:40,y:6};
+      obj=new fabric.Group([new fabric.Polygon(base,O),...base.map(p=>new fabric.Line([apex.x,apex.y,p.x,p.y],L))]);
+      break;
+    }
+
+    case 'hexa-pyramid': {
+      const poly=(r,cx,cy,n,a0)=>Array.from({length:n},(_,i)=>({x:Math.round(cx+r*Math.cos(a0+i*2*Math.PI/n)),y:Math.round(cy+r*Math.sin(a0+i*2*Math.PI/n))}));
+      const base=poly(24,40,60,6,0), apex={x:40,y:6};
+      obj=new fabric.Group([new fabric.Polygon(base,O),...base.map(p=>new fabric.Line([apex.x,apex.y,p.x,p.y],L))]);
+      break;
+    }
+
     default: return;
   }
 
