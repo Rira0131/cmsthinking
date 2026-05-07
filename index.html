@@ -17,6 +17,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://unpkg.com/mathlive@0.101.0/dist/mathlive.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 </head>
 
 <body>
@@ -656,6 +657,35 @@
             </ul>
           </div>
           <div class="help-block">
+            <div class="help-block-title" style="color:#6366F1">✏️ 도형 그리기</div>
+            <ul>
+              <li>활동 연구 툴바의 <strong style="color:#6366F1">✏️ 도형</strong> 버튼을 클릭하면 도형 편집기가 열립니다.</li>
+              <li>완성된 그림은 <strong>이미지로 삽입</strong> 버튼을 누르면 해당 활동의 이미지 목록에 추가됩니다.</li>
+            </ul>
+            <ul style="margin-top:8px">
+              <li><strong>그리기 도구</strong>
+                <ul style="margin-top:4px">
+                  <li><strong>✏️ 스케치</strong>: 마우스를 드래그해 자유롭게 선을 그립니다.</li>
+                  <li><strong>╱ 직선 / □ 사각형 / ○ 원</strong>: 드래그로 해당 도형을 그립니다.</li>
+                  <li><strong>T 텍스트</strong>: 클릭한 위치에 텍스트를 입력합니다. 치수나 길이를 기입할 때 사용합니다.</li>
+                  <li><strong>↖ 선택</strong>: 도형을 클릭해 이동하거나 크기를 조절합니다. <kbd style="background:#e5e7eb;padding:1px 5px;border-radius:3px;font-size:11px">Delete</kbd> 키로 선택한 도형을 삭제합니다.</li>
+                  <li><strong>⬜ 지우개</strong>: 드래그한 부분을 흰색으로 덮어 지웁니다.</li>
+                </ul>
+              </li>
+              <li><strong>기본 도형 삽입</strong>: 편집기 하단 행의 버튼을 클릭하면 도형이 캔버스 중앙에 바로 삽입됩니다.
+                <ul style="margin-top:4px">
+                  <li>2D: 삼각형, 직각삼각형</li>
+                  <li>3D: 정육면체, 직육면체, 원기둥, 원뿔, 구, 삼각기둥, 사각뿔</li>
+                  <li>삽입 후 자동으로 <strong>선택 모드</strong>로 전환되어 바로 이동·크기 조절이 가능합니다.</li>
+                </ul>
+              </li>
+              <li><strong>색상 / 선 두께</strong>: 검정·빨강·파랑·초록·주황 중 선택하고, 얇게·보통·굵게로 두께를 조절합니다.</li>
+              <li><strong>채우기</strong>: 활성화하면 사각형·원·기본 도형 안을 선택한 색으로 채웁니다.</li>
+              <li><strong>↩ 취소</strong> 또는 <kbd style="background:#e5e7eb;padding:1px 5px;border-radius:3px;font-size:11px">Ctrl+Z</kbd>: 마지막 작업을 되돌립니다 (최대 20단계).</li>
+              <li><strong>🗑️ 전체</strong>: 캔버스 전체를 지웁니다.</li>
+            </ul>
+          </div>
+          <div class="help-block">
             <div class="help-block-title">📋 내 작성 자료 탭</div>
             <ul>
               <li>내가 작성한 교안 목록을 확인하고 편집하거나 삭제할 수 있습니다.</li>
@@ -822,6 +852,63 @@
   </div>
 </div>
 
+<!-- 도형 그리기 모달 -->
+<div id="drawing-modal" role="dialog" aria-label="도형 그리기">
+  <div class="drawing-modal-box">
+    <div class="drawing-modal-title">✏️ 도형 그리기</div>
+    <div class="drawing-toolbar">
+      <div class="drawing-tools">
+        <button type="button" class="dt-tool" data-tool="pencil" title="자유스케치">✏️ 스케치</button>
+        <button type="button" class="dt-tool" data-tool="line" title="직선">╱ 직선</button>
+        <button type="button" class="dt-tool" data-tool="rect" title="사각형">□ 사각형</button>
+        <button type="button" class="dt-tool" data-tool="circle" title="원/타원">○ 원</button>
+        <button type="button" class="dt-tool" data-tool="text" title="텍스트 (치수 기입)">T 텍스트</button>
+        <button type="button" class="dt-tool" data-tool="select" title="선택/이동/삭제">↖ 선택</button>
+        <button type="button" class="dt-tool" data-tool="eraser" title="지우개">⬜ 지우개</button>
+      </div>
+      <div class="drawing-sep"></div>
+      <div class="drawing-colors">
+        <button type="button" class="dc-btn" data-color="#111827" style="background:#111827" title="검정"></button>
+        <button type="button" class="dc-btn" data-color="#DC2626" style="background:#DC2626" title="빨강"></button>
+        <button type="button" class="dc-btn" data-color="#2563EB" style="background:#2563EB" title="파랑"></button>
+        <button type="button" class="dc-btn" data-color="#059669" style="background:#059669" title="초록"></button>
+        <button type="button" class="dc-btn" data-color="#D97706" style="background:#D97706" title="주황"></button>
+      </div>
+      <div class="drawing-sep"></div>
+      <div class="drawing-strokes">
+        <button type="button" class="ds-btn" data-width="1" title="얇게">얇게</button>
+        <button type="button" class="ds-btn" data-width="2" title="보통">보통</button>
+        <button type="button" class="ds-btn" data-width="4" title="굵게">굵게</button>
+      </div>
+      <div class="drawing-sep"></div>
+      <button type="button" class="dt-tool" id="dt-fill" title="도형 채우기 ON/OFF">채우기</button>
+      <div class="drawing-sep"></div>
+      <button type="button" class="dt-tool" id="dt-undo" title="실행 취소 (Ctrl+Z)">↩ 취소</button>
+      <button type="button" class="dt-tool" id="dt-clear" title="전체 지우기">🗑️ 전체</button>
+    </div>
+    <div class="drawing-presets">
+      <span class="dp-label">도형 삽입 →</span>
+      <button type="button" class="dp-btn" data-shape="triangle">삼각형</button>
+      <button type="button" class="dp-btn" data-shape="right-triangle">직각삼각형</button>
+      <button type="button" class="dp-btn" data-shape="cube">정육면체</button>
+      <button type="button" class="dp-btn" data-shape="cuboid">직육면체</button>
+      <button type="button" class="dp-btn" data-shape="cylinder">원기둥</button>
+      <button type="button" class="dp-btn" data-shape="cone">원뿔</button>
+      <button type="button" class="dp-btn" data-shape="sphere">구</button>
+      <button type="button" class="dp-btn" data-shape="tri-prism">삼각기둥</button>
+      <button type="button" class="dp-btn" data-shape="sq-pyramid">사각뿔</button>
+    </div>
+    <div class="drawing-canvas-wrap">
+      <canvas id="drawing-canvas"></canvas>
+    </div>
+    <div class="drawing-modal-hint">선택 모드에서 도형을 클릭 후 Delete 키로 삭제할 수 있어요.</div>
+    <div class="drawing-modal-buttons">
+      <button type="button" class="drawing-btn-cancel" onclick="closeDrawingModal()">취소</button>
+      <button type="button" class="drawing-btn-confirm" onclick="confirmDrawingModal()">이미지로 삽입</button>
+    </div>
+  </div>
+</div>
+
 <!-- 앱 스크립트 (의존 순서대로 로드) -->
 <script src="js/config.js"></script>
 <script src="js/data.js"></script>
@@ -830,6 +917,7 @@
 <script src="js/schedule.js"></script>
 <script src="js/library.js"></script>
 <script src="js/math.js"></script>
+<script src="js/drawing.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/slideshow.js"></script>
 <script src="js/main.js"></script>

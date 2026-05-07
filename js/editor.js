@@ -66,6 +66,7 @@ function buildResearchToolbarHtml() {
       <button type="button" class="rt-clear" title="모든 서식 제거" onmousedown="event.preventDefault()" onclick="applyResearchFormat(this,'removeFormat')">서식 지우기</button>
       <span class="rt-sep"></span>
       <button type="button" class="rt-clear" title="수식 삽입" onmousedown="event.preventDefault()" onclick="openMathEditorForResearch(this)" style="color:#FF6B9D;font-weight:700">∑ 수식</button>
+      <button type="button" class="rt-clear" title="도형 그리기" onmousedown="event.preventDefault()" onclick="openDrawingModal(this)" style="color:#6366F1;font-weight:700">✏️ 도형</button>
     </div>`;
 }
 
