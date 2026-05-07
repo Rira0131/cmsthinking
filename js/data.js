@@ -24,6 +24,7 @@ async function _sbLoad() {
       lessonsQuery,
       _sb.from('week_status').select('*'),
       _sb.from('teachers').select('email, name, aliases, is_admin'),
+      loadCmsConfig(),
     ]);
     // [신규] teachers 결과 반영 + 로그인 시 임시 이름 정정
     if (teachersRes && !teachersRes.error && Array.isArray(teachersRes.data) && teachersRes.data.length > 0) {
@@ -61,7 +62,6 @@ async function _sbLoad() {
     if (statusRes.data) statusRes.data.forEach(r => {
       _state.weekStatus[r.id] = {t1: r.t1_done, t2: r.t2_done};
     });
-    await loadCmsConfig();
     bar.style.width = '100%';
     // 첫 화면 보여준 뒤 백그라운드에서 나머지 교안 모두 로드
     setTimeout(() => { backgroundLoadAllLessons().catch(e => console.warn('bg load:', e)); }, 300);
