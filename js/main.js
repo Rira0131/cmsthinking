@@ -457,12 +457,99 @@ function showEditorTab(tab) {
     const cnt = getDeletedBuiltinIds().length;
     const el = document.getElementById('restore-info');
     if (el) el.textContent = cnt > 0 ? `현재 숨긴 내장 자료: ${cnt}개` : '현재 숨긴 내장 자료가 없습니다.';
+    if (isAdmin()) _updateMigrateStatus();
   }
   event.target.classList.add('active');
   if (tab === 'mylist') renderMyLessons();
 }
 
-// ── ② 자료 공유: 내보내기 / 가져오기 ──
+// ── ② 내장 교안 → DB 마이그레이션 (관리자 전용) ──
+async function migrateBuiltinLessons() {
+  if (!isAdmin()) { showToast('⛔ 관리자만 사용할 수 있습니다'); return; }
+
+  const allBuiltins = DATA.lessons.map((l, i) => ({
+    ...l, id: l.id || ('builtin_' + i)
+  }));
+  const alreadyHidden = new Set(_state.deletedBuiltinIds);
+  const remaining = allBuiltins.filter(l => !alreadyHidden.has(l.id));
+
+  if (remaining.length === 0) {
+    showToast('✅ 이전할 내장 교안이 없습니다');
+    return;
+  }
+
+  if (!confirm(`내장 교안 ${remaining.length}개를 DB로 이전합니다.\n이전 후 각 선생님이 직접 편집 가능해집니다.\n계속하시겠습니까?`)) return;
+
+  const statusEl = document.getElementById('migrate-status');
+  let done = 0, skipped = 0;
+  const newHiddenIds = [..._state.deletedBuiltinIds];
+
+  for (let i = 0; i < remaining.length; i++) {
+    const l = remaining[i];
+    if (statusEl) statusEl.textContent = `진행 중: ${i + 1} / ${remaining.length}`;
+
+    const newId = 'migrated_' + l.id;
+    const exists = _state.customLessons.some(
+      c => c.id === newId ||
+        (c.title === l.title && normalizeName(c.author) === normalizeName(l.author) && c.level === l.level)
+    );
+    if (exists) {
+      skipped++;
+      if (!newHiddenIds.includes(l.id)) newHiddenIds.push(l.id);
+      continue;
+    }
+
+    const authorEmail = getEmailFromAuthorName(l.author || '');
+    const center = authorEmail ? getCenterFromEmail(authorEmail) : getCurrentCenter();
+    const migrated = { ...l, id: newId, author_email: authorEmail, center,
+      custom: true, lesson_type: l.lesson_type || '사고력',
+      updatedAt: l.updatedAt || new Date().toISOString() };
+    delete migrated.builtin;
+
+    try {
+      const { error } = await _sb.from('custom_lessons').upsert({
+        id: migrated.id, data: migrated, updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+      _state.customLessons.unshift(migrated);
+      if (!newHiddenIds.includes(l.id)) newHiddenIds.push(l.id);
+      done++;
+    } catch(e) {
+      console.error('[migrate] 실패:', l.title, e);
+    }
+
+    if (i % 10 === 9) await new Promise(r => setTimeout(r, 10));
+  }
+
+  _state.deletedBuiltinIds = [...new Set(newHiddenIds)];
+  await saveCmsConfig();
+
+  const msg = `완료: ${done}개 이전${skipped > 0 ? ', ' + skipped + '개 중복 건너뜀' : ''}`;
+  if (statusEl) statusEl.textContent = msg;
+  showToast('✅ ' + msg);
+  _updateMigrateStatus();
+
+  if (typeof filterLessons === 'function') filterLessons();
+  renderMyLessons();
+  if (typeof renderDashboard === 'function') renderDashboard();
+}
+
+function _updateMigrateStatus() {
+  const el = document.getElementById('migrate-status');
+  if (!el) return;
+  const total = DATA.lessons.length;
+  const hidden = _state.deletedBuiltinIds.length;
+  const remaining = total - hidden;
+  if (remaining <= 0) {
+    el.textContent = `✅ 전체 ${total}개 이전 완료`;
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = `내장 교안 ${total}개 중 ${remaining}개 미이전`;
+    el.style.color = '';
+  }
+}
+
+// ── ③ 자료 공유: 내보내기 / 가져오기 ──
 async function restoreBuiltinLessons() {
   const ids = getDeletedBuiltinIds();
   if (ids.length === 0) { showToast('숨긴 자료가 없습니다'); return; }
@@ -599,6 +686,8 @@ function init() {
     if (tag) {
       if (isAdmin()) {
         tag.innerHTML = '👤 ' + myName + ' <span style="background:#DC2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:4px">관리자</span>';
+        const migrateCard = document.getElementById('migrate-card');
+        if (migrateCard) migrateCard.style.display = '';
       } else {
         tag.textContent = '👤 ' + myName;
       }

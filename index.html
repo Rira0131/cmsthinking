@@ -459,6 +459,16 @@
           <div id="import-result" style="margin-top:12px;font-size:13px"></div>
         </div>
 
+        <div id="migrate-card" class="card" style="margin-top:16px;display:none;border-left:4px solid #DC2626">
+          <div class="card-title" style="margin-bottom:8px">
+            🔄 내장 교안 DB 이전
+            <span style="font-size:11px;background:#DC2626;color:#fff;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:8px">관리자 전용</span>
+          </div>
+          <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">내장 교안을 Supabase DB로 이전합니다. 이전 후 각 선생님이 본인 교안을 직접 편집할 수 있습니다.</p>
+          <div id="migrate-status" style="font-size:13px;color:var(--gray-500);margin-bottom:12px"></div>
+          <button class="btn btn-primary" style="background:#DC2626;border-color:#DC2626" onclick="migrateBuiltinLessons()">🔄 내장 교안 전체 이전 시작</button>
+        </div>
+
       </div>
     </section>
     <!-- 사용설명서 -->
