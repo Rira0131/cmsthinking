@@ -335,14 +335,17 @@ function insertPresetShape(id) {
     }
 
     case 'tri-prism': {
-      // 삼각기둥 — 두 삼각형 단면 + 3개 연결선 (옆으로 누운 형태)
-      obj = new fabric.Group([
-        new fabric.Polygon([{x:0,y:0},{x:0,y:68},{x:36,y:34}], O),
-        new fabric.Polygon([{x:50,y:0},{x:50,y:68},{x:86,y:34}], O),
-        new fabric.Line([0,0,50,0], L),
-        new fabric.Line([0,68,50,68], L),
-        new fabric.Line([36,34,86,34], L),
-      ]);
+      // 오각·육각기둥과 동일한 방식 — 위·아래 삼각형 밑면 + 3개 수직 모서리
+      const top=[{x:40,y:7},{x:63,y:21},{x:17,y:21}];
+      const bot=[{x:40,y:58},{x:63,y:72},{x:17,y:72}];
+      const shapes=[];
+      for(let i=0;i<3;i++){
+        const ni=(i+1)%3;
+        shapes.push(new fabric.Line([top[i].x,top[i].y,top[ni].x,top[ni].y],L));
+        shapes.push(new fabric.Line([bot[i].x,bot[i].y,bot[ni].x,bot[ni].y],L));
+        shapes.push(new fabric.Line([top[i].x,top[i].y,bot[i].x,bot[i].y],L));
+      }
+      obj=new fabric.Group(shapes);
       break;
     }
 
