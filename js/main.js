@@ -356,11 +356,11 @@ async function _deleteStorageFilesForLesson(l) {
 
 async function deleteCustomLesson(id) {
   const l = _state.customLessons.find(c => c.id === id);
-  // 관리자는 모든 교안 삭제 가능, 일반 유저는 본인 것만
-  if (l && !isMyLesson(l) && !isAdmin()) { showToast('⛔ 다른 선생님의 교안은 삭제할 수 없습니다'); return; }
-  const msg = (l && !isMyLesson(l) && isAdmin())
+  // 관리자만 삭제 가능
+  if (!isAdmin()) { showToast('⛔ 삭제는 관리자만 가능합니다'); return; }
+  const msg = (l && !isMyLesson(l))
     ? `[관리자] "${l.author || '다른 선생님'}"이 작성한 "${l.title}" 교안을 삭제하시겠습니까?`
-    : '정말 삭제하시겠습니까?';
+    : `"${l ? l.title : ''}" 교안을 삭제하시겠습니까?`;
   if (!confirm(msg)) return;
   await _deleteStorageFilesForLesson(l);
   _state.customLessons = _state.customLessons.filter(c => c.id !== id);
@@ -417,7 +417,7 @@ function renderMyLessons() {
       </div>
       <div class="my-lesson-actions">
         <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
-        ${(mine || isAdmin()) ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${(!mine && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
+        ${isAdmin() ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${!mine ? ' (관리자)' : ''}</button>` : ''}
       </div>
     </div>`;
   });
@@ -441,7 +441,7 @@ function showAllLessons() {
       </div>
       <div class="my-lesson-actions">
         <button class="btn btn-secondary btn-sm" onclick="editCustomLesson('${l.id}')">${mine ? '편집' : '복사'}</button>
-        ${(mine || isAdmin()) ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${(!mine && isAdmin()) ? ' (관리자)' : ''}</button>` : ''}
+        ${isAdmin() ? `<button class="btn btn-danger btn-sm" onclick="deleteCustomLesson('${l.id}')" title="${mine ? '삭제' : '관리자 권한으로 삭제'}">삭제${!mine ? ' (관리자)' : ''}</button>` : ''}
       </div>
     </div>`;
   });
