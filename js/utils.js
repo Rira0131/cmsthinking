@@ -302,7 +302,7 @@ function showPage(page) {
   if (page === 'dashboard') renderDashboard();
   if (page === 'schedule') renderSchedule();
   if (page === 'library') renderLibrary();
-  if (page === 'editor') renderMyLessons();
+  if (page === 'editor') { resetEditor(); renderMyLessons(); }
   if (page === 'curriculum') {
     if (_currentCurriculumTab === '교과') renderGyogwaIndex();
     else renderCurriculumIndex();
