@@ -175,6 +175,7 @@ function filterLessons() {
               ? `${l.gyogwa_grade ? `<span class="badge badge-gyogwa-grade">${l.gyogwa_grade}</span>` : ''} ${l.gyogwa_unit ? `<span class="badge badge-gyogwa-unit">${l.gyogwa_unit}</span>` : ''}`
               : `<span class="badge badge-level">${l.level}</span>`}
             ${l.author ? `<span class="badge badge-author">${l.author}</span>` : ''}
+            ${!isGyogwa ? `<a class="print-btn" href="${buildPortalSearchUrl(l.title, l.level||'')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="text-decoration:none" title="교사 포털 자료실">🔍 자료실</a>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
             <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${canEdit(l) ? '✏️ 편집' : '📋 복사'}</button>
