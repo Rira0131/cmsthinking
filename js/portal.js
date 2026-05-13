@@ -164,3 +164,28 @@ function openPortalSearch(title, level) {
 function openPortalSearchFromIndex(themeName, code) {
   _openUrl(_buildPortalUrl(code, themeName));
 }
+
+// 인덱스 테마셀 클릭 딜레이: 단일클릭(테마 필터) vs 더블클릭(자료실) 구분
+// onclick에서만 호출 — ondblclick 이벤트는 쓰지 않음
+// (브라우저가 dblclick 전에 click을 두 번 발생시켜 페이지가 먼저 이동하는 문제 방지)
+let _themeClickTimer = null;
+let _themeClickKey = '';
+
+function handleThemeClick(name, code) {
+  const key = code + '|' + name;
+  if (_themeClickTimer && _themeClickKey === key) {
+    // 250ms 안에 두 번째 클릭 → 더블클릭으로 처리
+    clearTimeout(_themeClickTimer);
+    _themeClickTimer = null;
+    _themeClickKey = '';
+    openPortalSearchFromIndex(name, code);
+  } else {
+    clearTimeout(_themeClickTimer);
+    _themeClickKey = key;
+    _themeClickTimer = setTimeout(() => {
+      _themeClickTimer = null;
+      _themeClickKey = '';
+      searchByTheme(name);
+    }, 250);
+  }
+}

@@ -100,7 +100,7 @@ function renderCurriculumIndex() {
     const dim = !matchesSearch ? 'dim' : '';
     const themesHtml = themesWithMatch.map(t => {
       const c = (t.matched ? 'has-lesson ' : '') + (t.isNew ? 'is-new' : '');
-      return `<div class="curr-theme ${c}" onclick="event.stopPropagation();searchByTheme('${t.name.replace(/'/g, "\\'")}')" ondblclick="event.stopPropagation();openPortalSearchFromIndex(${JSON.stringify(t.name)},'${item.code}')" title="클릭: 교안 필터 / 더블클릭: 자료실 검색">${escHtml(t.name)}</div>`;
+      return `<div class="curr-theme ${c}" onclick="event.stopPropagation();handleThemeClick(${JSON.stringify(t.name)},'${item.code}')" title="클릭: 교안 필터 / 더블클릭: 자료실">${escHtml(t.name)}</div>`;
     }).join('');
     return `<div class="curr-cell ${cls} ${dim}" onclick="searchByTheme('${item.code}')">
       <div class="curr-cell-code">${escHtml(item.code)}</div>
