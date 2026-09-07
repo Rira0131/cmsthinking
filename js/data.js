@@ -204,12 +204,12 @@ function showSyncToast(msg) {
 // DB 로드가 실패하거나 아직 안 됐을 때를 위한 fallback. 새 선생님이 추가되면
 // Supabase 콘솔에서 행을 추가하면 되고, 굳이 코드를 고치지 않아도 됨.
 const TEACHERS_FALLBACK = [
-  // 명지센터 (mjcms.com)
-  {email:'ysh@mjcms.com',  name:'윤시현', aliases:['윤시현T'],                is_admin:false},
-  {email:'kkm@mjcms.com',  name:'김경미', aliases:['김경미T','김경미 대리'],   is_admin:false},
-  {email:'byj@mjcms.com',  name:'변유진', aliases:['변유진T'],                is_admin:false},
-  {email:'jsy@mjcms.com',  name:'제선영', aliases:['제선영T','제선영 T'],      is_admin:false},
-  {email:'rira@mjcms.com', name:'황지향', aliases:['황지향T','황지향 센터장'], is_admin:true},
+  // 서부산센터 (sbcms.com) — 명지센터 통합 (구 mjcms.com)
+  {email:'ysh@sbcms.com',  name:'윤시현', aliases:['윤시현T'],                is_admin:false},
+  {email:'kkm@sbcms.com',  name:'김경미', aliases:['김경미T','김경미 대리'],   is_admin:false},
+  {email:'byj@sbcms.com',  name:'변유진', aliases:['변유진T'],                is_admin:false},
+  {email:'jsy@sbcms.com',  name:'제선영', aliases:['제선영T','제선영 T'],      is_admin:false},
+  {email:'rira@admin.com', name:'황지향', aliases:['황지향T','황지향 센터장'], is_admin:true},
   // 동래본원 (drcms.com)
   {email:'lhl@drcms.com',  name:'이향림', aliases:['이향림T'],                is_admin:false},
   {email:'bsh@drcms.com',  name:'배소현', aliases:['배소현T'],                is_admin:false},
@@ -220,6 +220,17 @@ const TEACHERS_FALLBACK = [
   {email:'kym@drcms.com',  name:'강영미', aliases:['강영미T'],                is_admin:false},
   {email:'hhj@drcms.com',  name:'홍현진', aliases:['홍현진T'],                is_admin:false},
   {email:'lhr@drcms.com',  name:'이혜림', aliases:['이혜림T'],                is_admin:false},
+  {email:'kyk@drcms.com',  name:'김용경', aliases:['김용경T'],                is_admin:false},
+  {email:'jgs@drcms.com',  name:'정경선', aliases:['정경선T'],                is_admin:false},
+  {email:'khi@drcms.com',  name:'김현임', aliases:['김현임T'],                is_admin:false},
+  {email:'lch@drcms.com',  name:'이채현', aliases:['이채현T'],                is_admin:false},
+  {email:'hmj@drcms.com',  name:'황민지', aliases:['황민지T'],                is_admin:false},
+  {email:'agm@drcms.com',  name:'안가미', aliases:['안가미T'],                is_admin:false},
+  {email:'ojm@drcms.com',  name:'오정민', aliases:['오정민T'],                is_admin:false},
+  {email:'rmh@drcms.com',  name:'류민형', aliases:['류민형T'],                is_admin:false},
+  {email:'pyh@drcms.com',  name:'박연화', aliases:['박연화T'],                is_admin:false},
+  {email:'yis2@drcms.com', name:'양인선', aliases:['양인선T'],                is_admin:false},
+  {email:'jsy@drcms.com',  name:'정선연', aliases:['정선연T'],                is_admin:false},
   // 동부산센터 (dbcms.com)
   {email:'leg@dbcms.com',  name:'이의금', aliases:['이의금T'],                is_admin:false},
   {email:'ymn@dbcms.com',  name:'윤미나', aliases:['윤미나T'],                is_admin:false},
@@ -229,7 +240,8 @@ const TEACHERS_FALLBACK = [
   {email:'shw@dbcms.com',  name:'서헌욱', aliases:['서헌욱T'],                is_admin:false},
   {email:'pjh@dbcms.com',  name:'박지혜', aliases:['박지혜T'],                is_admin:false},
   {email:'jdu@dbcms.com',  name:'정다움', aliases:['정다움T'],                is_admin:false},
-  {email:'hsh@dbcms.com',  name:'허시현', aliases:['허시현T'],                is_admin:false}
+  {email:'hsh@dbcms.com',  name:'허시현', aliases:['허시현T'],                is_admin:false},
+  {email:'kmj@dbcms.com',  name:'김민정', aliases:['김민정T'],                is_admin:false}
 ];
 let _teachers = TEACHERS_FALLBACK.slice();
 let _teachersLoaded = false;
@@ -275,14 +287,16 @@ const CENTER_MAP = {
   'mjcms.com': '명지센터',
   'drcms.com': '동래본원',
   'dbcms.com': '동부산센터',
-  'sbcms.com': '서부산센터'
+  'sbcms.com': '서부산센터',
+  'admin.com': '서부산센터'
 };
 // 센터별 seminar_schedule id (명지=1 기존 유지)
 const CENTER_SCHEDULE_IDS = {
   'mjcms.com': 1,
   'drcms.com': 2,
   'dbcms.com': 3,
-  'sbcms.com': 4
+  'sbcms.com': 4,
+  'admin.com': 4
 };
 
 function getCenterFromEmail(email) {
