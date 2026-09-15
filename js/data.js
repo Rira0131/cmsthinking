@@ -212,7 +212,7 @@ const TEACHERS_FALLBACK = [
   {email:'kmk@sbcms.com',  name:'강민경', aliases:['강민경T'],                is_admin:true},
   {email:'rira@admin.com', name:'황지향', aliases:['황지향T','황지향 센터장'], is_admin:true},
   // 동래본원 (drcms.com)
-  {email:'lhl@drcms.com',  name:'이향림', aliases:['이향림T'],                is_admin:false},
+  {email:'lhl@drcms.com',  name:'이향림', aliases:['이향림T'],                is_admin:true},
   {email:'bsh@drcms.com',  name:'배소현', aliases:['배소현T'],                is_admin:false},
   {email:'mjh@drcms.com',  name:'문지혜', aliases:['문지혜T'],                is_admin:true},
   {email:'yis@drcms.com',  name:'유인선', aliases:['유인선T'],                is_admin:false},
@@ -234,7 +234,7 @@ const TEACHERS_FALLBACK = [
   {email:'jsy@drcms.com',  name:'정선연', aliases:['정선연T'],                is_admin:false},
   // 동부산센터 (dbcms.com)
   {email:'leg@dbcms.com',  name:'이의금', aliases:['이의금T'],                is_admin:false},
-  {email:'ymn@dbcms.com',  name:'윤미나', aliases:['윤미나T'],                is_admin:false},
+  {email:'ymn@dbcms.com',  name:'윤미나', aliases:['윤미나T'],                is_admin:true},
   {email:'hey@dbcms.com',  name:'홍은영', aliases:['홍은영T'],                is_admin:true},
   {email:'hyj@dbcms.com',  name:'허유진', aliases:['허유진T'],                is_admin:true},
   {email:'chj@dbcms.com',  name:'최희주', aliases:['최희주T'],                is_admin:false},
