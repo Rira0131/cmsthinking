@@ -382,6 +382,13 @@ function sanitizeResearchHtml(html) {
       el.removeAttribute('class');
     }
   });
+  // data-* 는 data-latex만 남긴다 — DOMPurify는 ALLOW_DATA_ATTR 기본값 때문에
+  // data-rendered 같은 렌더링 상태 플래그까지 통과시켜 저장값에 섞인다.
+  tpl.content.querySelectorAll('*').forEach(el => {
+    Array.from(el.attributes).forEach(a => {
+      if (a.name.startsWith('data-') && a.name !== 'data-latex') el.removeAttribute(a.name);
+    });
+  });
   // 수식 span: data-latex 검증 + 렌더링 자식 비우기
   tpl.content.querySelectorAll('span.math').forEach(el => {
     const latex = (el.getAttribute('data-latex') || '').trim();

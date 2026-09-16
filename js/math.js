@@ -3,7 +3,9 @@
 function renderMathIn(container) {
   if (!container || typeof katex === 'undefined') return;
   container.querySelectorAll('span.math[data-latex]').forEach(el => {
-    if (el.dataset.rendered === '1') return;
+    // data-rendered 플래그만 믿으면 안 된다 — 저장 시 span 내용은 비우는데 플래그가
+    // 같이 저장돼 돌아오는 경우가 있어, 내용이 실제로 있는지도 함께 확인한다.
+    if (el.dataset.rendered === '1' && el.firstChild) return;
     const latex = el.getAttribute('data-latex') || '';
     try {
       katex.render(latex, el, { throwOnError: false, displayMode: false, output: 'html' });
