@@ -781,6 +781,20 @@
   <div class="slide-topbar">
     <div class="slide-topbar-title" id="slide-lesson-title"></div>
     <div style="display:flex;align-items:center;gap:12px">
+      <div class="slide-pen-tools" id="slide-pen-tools">
+        <button class="pen-color active" style="background:#EF4444" onclick="setPenColor('#EF4444',this)" title="빨강"></button>
+        <button class="pen-color" style="background:#2563EB" onclick="setPenColor('#2563EB',this)" title="파랑"></button>
+        <button class="pen-color" style="background:#111827" onclick="setPenColor('#111827',this)" title="검정"></button>
+        <button class="pen-color" style="background:#16A34A" onclick="setPenColor('#16A34A',this)" title="초록"></button>
+        <span class="pen-sep"></span>
+        <button class="pen-width" onclick="setPenWidth(2,this)" title="얇게"><span style="width:4px;height:4px"></span></button>
+        <button class="pen-width active" onclick="setPenWidth(4,this)" title="보통"><span style="width:7px;height:7px"></span></button>
+        <button class="pen-width" onclick="setPenWidth(9,this)" title="굵게"><span style="width:11px;height:11px"></span></button>
+        <span class="pen-sep"></span>
+        <button class="pen-tool" id="slide-pen-eraser" onclick="togglePenEraser()" title="지우개">🧽</button>
+        <button class="pen-tool" onclick="clearPenSlide()" title="이 슬라이드 필기 지우기">🗑️</button>
+      </div>
+      <button class="slide-pen-btn" id="slide-pen-btn" onclick="togglePenMode()" title="펜 필기 (Shift+P)">✏️ 펜</button>
       <button class="slide-theme-btn" id="slide-theme-btn" onclick="toggleSlideshowTheme()" title="라이트/다크 전환">🌙 다크</button>
       <button class="slide-book-btn" id="slide-book-btn" onclick="toggleTextbookPanel()" title="교재 이미지 패널" style="display:none">📖 교재</button>
       <div class="slide-counter" id="slide-counter"></div>
@@ -789,7 +803,10 @@
   </div>
   <div class="slide-main-row">
     <div style="flex:1;display:flex;flex-direction:column;min-width:0;min-height:0">
-      <div class="slide-area" id="slide-area"></div>
+      <div class="slide-stage">
+        <div class="slide-area" id="slide-area"></div>
+        <canvas id="slide-pen-canvas"></canvas>
+      </div>
       <div class="slide-nav">
         <button class="slide-nav-btn" id="slide-prev" onclick="slideMove(-1)">&#8592;</button>
         <div class="slide-dots" id="slide-dots"></div>

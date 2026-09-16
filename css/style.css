@@ -465,7 +465,27 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 #slideshow-overlay.theme-dark .slide-book-btn.active,
 #slideshow-overlay.theme-dark .slide-theme-btn:hover{background:rgba(99,102,241,0.5);color:#fff}
 .slide-main-row{flex:1;display:flex;overflow:hidden;min-height:0}
+.slide-stage{flex:1;position:relative;display:flex;min-height:0;min-width:0}
 .slide-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 80px;overflow-y:auto;overflow-x:hidden;position:relative;transition:flex .3s}
+/* 펜 필기 캔버스 — 펜을 꺼두면 pointer-events가 없어 기존 클릭(이미지 확대·영상)이 그대로 동작 */
+#slide-pen-canvas{position:absolute;inset:0;pointer-events:none;z-index:6}
+#slideshow-overlay.pen-on #slide-pen-canvas{pointer-events:auto;cursor:crosshair;touch-action:none}
+.slide-pen-btn{background:var(--sl-btn-bg);border:none;color:var(--sl-accent);padding:5px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s;white-space:nowrap}
+.slide-pen-btn:hover,.slide-pen-btn.active{background:#6366F1;color:#fff}
+#slideshow-overlay.theme-dark .slide-pen-btn:hover,
+#slideshow-overlay.theme-dark .slide-pen-btn.active{background:rgba(99,102,241,0.5);color:#fff}
+.slide-pen-tools{display:none;align-items:center;gap:6px}
+#slideshow-overlay.pen-on .slide-pen-tools{display:flex}
+.slide-pen-tools .pen-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
+.slide-pen-tools .pen-color:hover{transform:scale(1.15)}
+.slide-pen-tools .pen-color.active{border-color:var(--sl-accent);transform:scale(1.15)}
+.slide-pen-tools .pen-sep{width:1px;height:18px;background:var(--sl-btn-bg);flex-shrink:0}
+.slide-pen-tools .pen-width{background:var(--sl-btn-bg);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.slide-pen-tools .pen-width span{display:block;background:var(--sl-btn-fg);border-radius:50%;transition:background .15s}
+.slide-pen-tools .pen-width:hover,.slide-pen-tools .pen-width.active{background:#6366F1}
+.slide-pen-tools .pen-width:hover span,.slide-pen-tools .pen-width.active span{background:#fff}
+.slide-pen-tools .pen-tool{background:var(--sl-btn-bg);border:none;color:var(--sl-btn-fg);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.slide-pen-tools .pen-tool:hover,.slide-pen-tools .pen-tool.active{background:#6366F1;color:#fff}
 .slide-area::-webkit-scrollbar{width:8px}
 .slide-area::-webkit-scrollbar-thumb{background:rgba(120,120,180,0.4);border-radius:4px}
 .slide-area::-webkit-scrollbar-thumb:hover{background:rgba(120,120,180,0.6)}

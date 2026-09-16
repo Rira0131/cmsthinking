@@ -49,6 +49,8 @@ function startSlideshow(lessonId) {
 
   document.getElementById('slide-lesson-title').textContent = l.title;
   _slideIdx = 0;
+  _penStrokes.clear();
+  togglePenMode(false);
   renderSlide();
   // [신규] 마지막에 사용한 테마(라이트/다크) 복원. 기본값은 라이트.
   applySlideshowTheme(localStorage.getItem('cms_slide_theme') || 'light');
@@ -60,6 +62,8 @@ function startSlideshow(lessonId) {
   // 무선 프레젠터의 키 입력이 풀스크린/포커스 위치에 따라 누락되는 것을 방지
   ov.setAttribute('tabindex', '-1');
   setTimeout(() => ov.focus(), 60);
+  // 오버레이가 화면에 올라온 뒤라야 캔버스 크기를 잴 수 있다
+  requestAnimationFrame(() => { _penInit(); _penResize(); });
 
   // 전체화면 시도
   if (ov.requestFullscreen) ov.requestFullscreen().catch(() => {});
@@ -103,6 +107,9 @@ function closeSlideshow() {
   closeSlideVideo();
   if (typeof closeSlideLightbox === 'function') closeSlideLightbox();
   _slideVideoIdx.clear();
+  togglePenMode(false);
+  _penStrokes.clear();
+  _penRedraw();
   document.getElementById('slideshow-overlay').classList.remove('open');
   document.getElementById('textbook-panel').classList.remove('open');
   document.getElementById('slide-book-btn').classList.remove('active');
@@ -337,6 +344,7 @@ function renderSlide() {
   _scheduleMathRender(areaEl);
   // [수정] transform 자동 축소 대신 슬라이드 영역에서 자연 스크롤 — 새 슬라이드는 항상 맨 위부터 보이게
   areaEl.scrollTop = 0;
+  _penRedraw();
 }
 
 function jumpSlide(idx) {
@@ -367,6 +375,8 @@ function _handleSlideshowKey(e) {
     }
   }
   const k = e.key;
+  // 펜 토글 — P 단독은 이미 '이전 슬라이드'(무선 포인터 호환)라서 Shift+P를 쓴다
+  if (e.shiftKey && (k === 'P' || k === 'p')) { e.preventDefault(); togglePenMode(); return; }
   // 다음 (포인터 forward 버튼이 보낼 가능성이 있는 모든 키)
   const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown','Enter','Tab','MediaTrackNext','N','n'];
   // 이전 (포인터 back 버튼)
@@ -419,6 +429,165 @@ function openLightbox(src) {
   }
   document.getElementById('img-lightbox-img').src = src;
   lb.classList.add('open');
+}
+
+// ── 발표 중 펜 필기 ──
+// 슬라이드 위에 투명 캔버스를 얹어 판서한다. 펜을 끄면 캔버스의 pointer-events가 꺼져
+// 이미지 확대·영상 재생 같은 기존 클릭 동작이 그대로 살아있고, 그려둔 필기는 화면에 남는다.
+// 좌표는 화면이 아니라 '콘텐츠 기준'(스크롤 포함)으로 저장해 스크롤해도 필기가 내용을 따라간다.
+let _penOn = false;
+let _penErasing = false;
+let _penColor = '#EF4444';
+let _penWidth = 4;               // 얇게 2 / 보통 4 / 굵게 9
+const _PEN_ERASER_WIDTH = 28;
+const _penStrokes = new Map();   // slideIdx → [{color,width,erase,pts:[{x,y}]}]
+let _penCur = null;
+
+function _penCanvasEl() { return document.getElementById('slide-pen-canvas'); }
+
+function _penResize() {
+  const canvas = _penCanvasEl();
+  const area = document.getElementById('slide-area');
+  if (!canvas || !area) return;
+  const w = area.clientWidth, h = area.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  _penRedraw();
+}
+
+function _penRedraw() {
+  const canvas = _penCanvasEl();
+  const area = document.getElementById('slide-area');
+  if (!canvas || !area) return;
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  const strokes = _penStrokes.get(_slideIdx) || [];
+  const off = area.scrollTop;
+  strokes.forEach(s => {
+    if (!s.pts.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.width;
+    ctx.beginPath();
+    ctx.moveTo(s.pts[0].x, s.pts[0].y - off);
+    if (s.pts.length === 1) ctx.lineTo(s.pts[0].x + 0.1, s.pts[0].y - off);
+    else for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y - off);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function _penPoint(e) {
+  const canvas = _penCanvasEl();
+  const area = document.getElementById('slide-area');
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top + area.scrollTop };
+}
+
+function _penInit() {
+  const canvas = _penCanvasEl();
+  const area = document.getElementById('slide-area');
+  if (!canvas || !area || canvas._penReady) return;
+  canvas._penReady = true;
+
+  canvas.addEventListener('pointerdown', e => {
+    if (!_penOn) return;
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch(_) {}
+    _penCur = {
+      color: _penColor,
+      width: _penErasing ? _PEN_ERASER_WIDTH : _penWidth,
+      erase: _penErasing,
+      pts: [_penPoint(e)]
+    };
+    const arr = _penStrokes.get(_slideIdx) || [];
+    arr.push(_penCur);
+    _penStrokes.set(_slideIdx, arr);
+    _penRedraw();
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!_penOn || !_penCur) return;
+    e.preventDefault();
+    const prev = _penCur.pts[_penCur.pts.length - 1];
+    const p = _penPoint(e);
+    _penCur.pts.push(p);
+    // 새로 그어진 구간만 덧그린다 (매 프레임 전체 재렌더 방지)
+    const ctx = canvas.getContext('2d');
+    const off = area.scrollTop;
+    ctx.save();
+    ctx.globalCompositeOperation = _penCur.erase ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = _penCur.color;
+    ctx.lineWidth = _penCur.width;
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y - off);
+    ctx.lineTo(p.x, p.y - off);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  const endStroke = e => {
+    if (!_penCur) return;
+    _penCur = null;
+    try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+  };
+  canvas.addEventListener('pointerup', endStroke);
+  canvas.addEventListener('pointercancel', endStroke);
+
+  area.addEventListener('scroll', _penRedraw);
+  // 교재 패널 토글·전체화면 전환·창 크기 변경 모두 여기서 흡수
+  if (window.ResizeObserver) new ResizeObserver(() => _penResize()).observe(area);
+}
+
+function togglePenMode(force) {
+  const overlay = document.getElementById('slideshow-overlay');
+  if (!overlay) return;
+  _penOn = (typeof force === 'boolean') ? force : !_penOn;
+  overlay.classList.toggle('pen-on', _penOn);
+  document.getElementById('slide-pen-btn')?.classList.toggle('active', _penOn);
+  if (_penOn) {
+    _penInit();
+    _penResize();
+  } else {
+    _penErasing = false;
+    document.getElementById('slide-pen-eraser')?.classList.remove('active');
+  }
+}
+
+function setPenColor(color, btn) {
+  _penColor = color;
+  _penErasing = false;
+  document.getElementById('slide-pen-eraser')?.classList.remove('active');
+  document.querySelectorAll('.slide-pen-tools .pen-color').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function setPenWidth(w, btn) {
+  _penWidth = w;
+  document.querySelectorAll('.slide-pen-tools .pen-width').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function togglePenEraser() {
+  _penErasing = !_penErasing;
+  document.getElementById('slide-pen-eraser')?.classList.toggle('active', _penErasing);
+}
+
+function clearPenSlide() {
+  _penStrokes.delete(_slideIdx);
+  _penRedraw();
 }
 
 // ── 전역 Ctrl+V 이미지 붙여넣기 ──
