@@ -725,6 +725,99 @@ function init() {
 // init()은 로그인 완료 후 자동 호출됨
 
 // ── A4 출력 기능 ──
+// ── 교재 이미지 A4 출력 ──
+// 연구 자료 출력물 안의 교재 이미지는 참고용 썸네일이라 작다.
+// 수업에서 확대해 보거나 나눠줄 용도로, 교재 이미지만 A4에 크게 뽑는 별도 경로.
+let _tbPrintIdx = null;
+
+function openTextbookPrint(idx) {
+  const l = getAllLessons()[idx];
+  if (!l || !(l.textbook_images || []).length) return;
+  _tbPrintIdx = idx;
+  const el = document.getElementById('tb-print-count');
+  if (el) el.textContent = `교재 이미지 ${l.textbook_images.length}장을 A4 용지에 몇 장씩 넣을까요?`;
+  const modal = document.getElementById('tb-print-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeTextbookPrint() {
+  const modal = document.getElementById('tb-print-modal');
+  if (modal) modal.style.display = 'none';
+  _tbPrintIdx = null;
+}
+
+function doTextbookPrint(perPage) {
+  const l = _tbPrintIdx === null ? null : getAllLessons()[_tbPrintIdx];
+  closeTextbookPrint();
+  if (!l) return;
+  const imgs = l.textbook_images || [];
+  if (!imgs.length) return;
+
+  // perPage 단위로 끊어서 페이지 구성
+  const pages = [];
+  for (let i = 0; i < imgs.length; i += perPage) pages.push(imgs.slice(i, i + perPage));
+  const pagesHtml = pages.map(group =>
+    `<div class="pg">${group.map(src => `<img src="${src}">`).join('')}</div>`
+  ).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${escHtml(l.title)} — 교재 이미지</title>
+<style>
+  @page { size: A4; margin: 8mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; }
+  .pg {
+    height: calc(297mm - 16mm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4mm;
+    page-break-after: always;
+  }
+  .pg:last-child { page-break-after: auto; }
+  .pg img {
+    max-width: 100%;
+    max-height: ${perPage === 1 ? '100%' : 'calc(50% - 2mm)'};
+    object-fit: contain;
+  }
+  @media screen {
+    body { background: #f3f4f6; padding: 10px; }
+    .pg { background: #fff; margin: 0 auto 10px; width: 210mm; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+  }
+</style>
+</head>
+<body>
+  ${pagesHtml}
+  <script>
+    // 이미지가 다 로드된 뒤 인쇄해야 빈 페이지가 안 나온다
+    window.onload = function(){
+      var imgs = Array.prototype.slice.call(document.images);
+      var pending = imgs.filter(function(im){ return !im.complete; }).length;
+      var done = false;
+      var go = function(){ if (done) return; done = true; setTimeout(function(){ try { window.print(); } catch(_){} }, 200); };
+      if (!pending) { go(); return; }
+      imgs.forEach(function(im){
+        if (im.complete) return;
+        var tick = function(){ pending--; if (pending <= 0) go(); };
+        im.addEventListener('load', tick);
+        im.addEventListener('error', tick);
+      });
+      setTimeout(go, 8000);   // 이미지가 안 뜨는 경우 대비
+    };
+  <\/script>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank', 'width=794,height=1123');
+  if (!w) { showToast('⚠️ 팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
 function printLesson(idx) {
   const l = getAllLessons()[idx];
   if (!l) return;

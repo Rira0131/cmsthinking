@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 
 <!-- 스타일 -->
-<link rel="stylesheet" href="css/style.css?v=20260916b">
+<link rel="stylesheet" href="css/style.css?v=20260930">
 
 <!-- 외부 라이브러리 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -115,6 +115,27 @@
       </div>
     </div>
   </aside>
+
+  <!-- 교재 이미지 출력 옵션 모달 -->
+  <div id="tb-print-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;align-items:center;justify-content:center" onclick="if(event.target===this)closeTextbookPrint()">
+    <div style="background:white;border-radius:14px;padding:28px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <h3 style="margin:0 0 6px 0;font-size:18px;color:#111827">📖 교재 이미지 출력</h3>
+      <p style="margin:0 0 20px 0;font-size:13px;color:#6B7280" id="tb-print-count"></p>
+      <div style="display:flex;gap:10px">
+        <button onclick="doTextbookPrint(1)" style="flex:1;padding:16px 12px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;cursor:pointer;text-align:center">
+          <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px">A4에 1장</div>
+          <div style="font-size:12px;color:#6B7280">가장 크게</div>
+        </button>
+        <button onclick="doTextbookPrint(2)" style="flex:1;padding:16px 12px;border-radius:10px;border:1.5px solid #E5E7EB;background:white;cursor:pointer;text-align:center">
+          <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px">A4에 2장</div>
+          <div style="font-size:12px;color:#6B7280">종이 절약</div>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:18px">
+        <button onclick="closeTextbookPrint()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;color:#374151;font-size:14px;font-weight:600;cursor:pointer">취소</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 비밀번호 변경 모달 -->
   <div id="pw-change-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;align-items:center;justify-content:center">
@@ -942,18 +963,18 @@
 </div>
 
 <!-- 앱 스크립트 (의존 순서대로 로드) -->
-<script src="js/config.js?v=20260916b"></script>
-<script src="js/data.js?v=20260916b"></script>
-<script src="js/utils.js?v=20260916b"></script>
-<script src="js/portal.js?v=20260916b"></script>
-<script src="js/dashboard.js?v=20260916b"></script>
-<script src="js/schedule.js?v=20260916b"></script>
-<script src="js/library.js?v=20260916b"></script>
-<script src="js/math.js?v=20260916b"></script>
-<script src="js/drawing.js?v=20260916b"></script>
-<script src="js/editor.js?v=20260916b"></script>
-<script src="js/slideshow.js?v=20260916b"></script>
-<script src="js/main.js?v=20260916b"></script>
+<script src="js/config.js?v=20260930"></script>
+<script src="js/data.js?v=20260930"></script>
+<script src="js/utils.js?v=20260930"></script>
+<script src="js/portal.js?v=20260930"></script>
+<script src="js/dashboard.js?v=20260930"></script>
+<script src="js/schedule.js?v=20260930"></script>
+<script src="js/library.js?v=20260930"></script>
+<script src="js/math.js?v=20260930"></script>
+<script src="js/drawing.js?v=20260930"></script>
+<script src="js/editor.js?v=20260930"></script>
+<script src="js/slideshow.js?v=20260930"></script>
+<script src="js/main.js?v=20260930"></script>
 
 </body>
 </html>

@@ -178,6 +178,7 @@ function filterLessons() {
             ${!isGyogwa ? `<a class="print-btn" href="${buildPortalSearchUrl(l.title, l.level||'')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="text-decoration:none" title="교사 포털 자료실">🔍 자료실</a>` : ''}
             <button class="print-btn" onclick="event.stopPropagation();startSlideshow('${l.id}')">📽️ 발표</button>
             <button class="print-btn" onclick="event.stopPropagation();printLesson(${lessonIdx})">🖨️ 출력</button>
+            ${(l.textbook_images && l.textbook_images.length > 0) ? `<button class="print-btn" onclick="event.stopPropagation();openTextbookPrint(${lessonIdx})" title="교재 이미지를 A4로 크게 출력">📖 교재 출력</button>` : ''}
             <button class="print-btn" style="color:var(--primary);border-color:var(--primary)" onclick="event.stopPropagation();loadLessonToEditor('${l.id}', ${!!l.custom})">${canEdit(l) ? '✏️ 편집' : '📋 복사'}</button>
             ${isAdmin() ? `<button class="print-btn" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();deleteAnyLesson('${l.id}', ${!!l.custom})" title="${isMyLesson(l) ? '삭제' : '관리자 권한으로 삭제'}">🗑️ 삭제${!isMyLesson(l) ? ' (관리자)' : ''}</button>` : ''}
             <span class="chevron">▼</span>
