@@ -779,9 +779,11 @@ function doTextbookPrint(perPage) {
     page-break-after: always;
   }
   .pg:last-child { page-break-after: auto; }
+  /* max-* 만 쓰면 원본보다 작은 이미지는 확대되지 않아 A4를 못 채운다.
+     width/height를 지정하고 object-fit으로 비율을 유지한다. */
   .pg img {
-    max-width: 100%;
-    max-height: ${perPage === 1 ? '100%' : 'calc(50% - 2mm)'};
+    width: 100%;
+    height: ${perPage === 1 ? '100%' : 'calc(50% - 2mm)'};
     object-fit: contain;
   }
   @media screen {
