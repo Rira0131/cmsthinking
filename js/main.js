@@ -766,29 +766,30 @@ function doTextbookPrint(perPage) {
 <meta charset="UTF-8">
 <title>${escHtml(l.title)} — 교재 이미지</title>
 <style>
-  @page { size: A4; margin: 8mm; }
+  /* 2장 모드는 용지를 가로로 돌려 나란히 배치 — 세로로 쌓으면 교재가 너무 작아진다 */
+  @page { size: ${perPage === 1 ? 'A4' : 'A4 landscape'}; margin: 8mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #fff; }
   .pg {
-    height: calc(297mm - 16mm);
+    height: calc(${perPage === 1 ? '297mm' : '210mm'} - 16mm);
     display: flex;
-    flex-direction: column;
+    flex-direction: ${perPage === 1 ? 'column' : 'row'};
     align-items: center;
     justify-content: center;
     gap: 4mm;
     page-break-after: always;
   }
   .pg:last-child { page-break-after: auto; }
-  /* max-* 만 쓰면 원본보다 작은 이미지는 확대되지 않아 A4를 못 채운다.
+  /* max-* 만 쓰면 원본보다 작은 이미지는 확대되지 않아 용지를 못 채운다.
      width/height를 지정하고 object-fit으로 비율을 유지한다. */
   .pg img {
-    width: 100%;
-    height: ${perPage === 1 ? '100%' : 'calc(50% - 2mm)'};
+    width: ${perPage === 1 ? '100%' : 'calc(50% - 2mm)'};
+    height: 100%;
     object-fit: contain;
   }
   @media screen {
     body { background: #f3f4f6; padding: 10px; }
-    .pg { background: #fff; margin: 0 auto 10px; width: 210mm; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+    .pg { background: #fff; margin: 0 auto 10px; width: ${perPage === 1 ? '210mm' : '297mm'}; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
   }
 </style>
 </head>
