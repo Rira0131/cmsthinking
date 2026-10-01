@@ -382,7 +382,26 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .img-thumb-del:hover{background:#B91C1C}
 #img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:none;align-items:center;justify-content:center;cursor:zoom-out}
 #img-lightbox.open{display:flex}
-#img-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+#img-lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);position:relative;z-index:1}
+/* 확대 화면 판서 — 슬라이드쇼 밖(자료실)에서도 동일하게 동작 */
+#lb-pen-canvas{position:fixed;inset:0;pointer-events:none;z-index:2}
+#img-lightbox.pen-on #lb-pen-canvas{pointer-events:auto;cursor:crosshair;touch-action:none}
+.lb-toolbar{position:fixed;top:16px;right:16px;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.55);padding:8px 12px;border-radius:24px;z-index:3;cursor:default}
+.lb-pen-tools{display:none;align-items:center;gap:6px}
+#img-lightbox.pen-on .lb-pen-tools{display:flex}
+.lb-pen-tools .pen-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
+.lb-pen-tools .pen-color:hover{transform:scale(1.15)}
+.lb-pen-tools .pen-color.active{border-color:#fff;transform:scale(1.15)}
+.lb-pen-tools .pen-width{background:rgba(255,255,255,.18);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lb-pen-tools .pen-width span{display:block;background:#fff;border-radius:50%}
+.lb-pen-tools .pen-width:hover,.lb-pen-tools .pen-width.active{background:#6366F1}
+.lb-pen-tools .pen-tool{background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lb-pen-tools .pen-tool:hover,.lb-pen-tools .pen-tool.active{background:#6366F1}
+.lb-pen-tools .pen-sep{width:1px;height:18px;background:rgba(255,255,255,.3);flex-shrink:0}
+.lb-pen-btn{background:rgba(255,255,255,.18);border:none;color:#fff;padding:5px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
+.lb-pen-btn:hover,.lb-pen-btn.active{background:#6366F1}
+.lb-close{background:rgba(255,255,255,.18);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lb-close:hover{background:rgba(255,255,255,.3)}
 /* ── 아코디언 섹션 ── */
 .accordion-section{border:1.5px solid var(--gray-200);border-radius:10px;margin-bottom:10px;overflow:hidden}
 .accordion-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-50);cursor:pointer;user-select:none;gap:8px}

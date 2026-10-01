@@ -110,6 +110,7 @@ function closeSlideshow() {
   togglePenMode(false);
   _penStrokes.clear();
   _penRedraw();
+  _lbStrokes.clear();
   document.getElementById('slideshow-overlay').classList.remove('open');
   document.getElementById('textbook-panel').classList.remove('open');
   document.getElementById('slide-book-btn').classList.remove('active');
@@ -190,6 +191,7 @@ function onLightboxClick(e) {
 function closeSlideLightbox() {
   const lb = document.getElementById('img-lightbox');
   if (lb) lb.classList.remove('open');
+  if (typeof toggleLightboxPen === 'function') toggleLightboxPen(false);
   _slideLightboxIdx = -1;
   _updateThumbHighlight();
 }
@@ -429,6 +431,174 @@ function openLightbox(src) {
   }
   document.getElementById('img-lightbox-img').src = src;
   lb.classList.add('open');
+  _lbSrc = src;
+  _lbInit();
+  _lbResize();                        // 즉시 — 이전 이미지의 필기가 남지 않도록
+  requestAnimationFrame(_lbResize);   // 레이아웃이 잡힌 뒤 한 번 더 (이미지 크기 확정)
+}
+
+// 라이트박스 배경 클릭 — 펜 사용 중에는 닫히지 않게 한다
+function onLightboxBgClick(e) {
+  if (_lbPenOn) return;
+  closeSlideLightbox();
+}
+
+// ── 확대 화면(라이트박스) 판서 ──
+// 교재 이미지를 크게 띄워놓고 그 위에 푸는 흐름을 위해, 슬라이드 판서와 별도로 둔다.
+// 좌표는 '표시된 이미지 기준 비율(0~1)'로 저장해, 창 크기가 바뀌어도 그림 위 같은 자리에 남는다.
+let _lbPenOn = false;
+let _lbErasing = false;
+let _lbColor = '#EF4444';
+let _lbWidth = 4;
+const _LB_ERASER_WIDTH = 28;
+let _lbSrc = '';
+const _lbStrokes = new Map();   // 이미지 src → [{color,wNorm,erase,pts:[{nx,ny}]}]
+let _lbCur = null;
+
+function _lbImgRect() {
+  const img = document.getElementById('img-lightbox-img');
+  return img ? img.getBoundingClientRect() : null;
+}
+
+function _lbResize() {
+  const canvas = document.getElementById('lb-pen-canvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth, h = window.innerHeight;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  _lbRedraw();
+}
+
+function _lbRedraw() {
+  const canvas = document.getElementById('lb-pen-canvas');
+  const r = _lbImgRect();
+  if (!canvas || !r) return;
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  (_lbStrokes.get(_lbSrc) || []).forEach(s => {
+    if (!s.pts.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = Math.max(1, s.wNorm * r.width);
+    ctx.beginPath();
+    const p0 = s.pts[0];
+    ctx.moveTo(r.left + p0.nx * r.width, r.top + p0.ny * r.height);
+    if (s.pts.length === 1) ctx.lineTo(r.left + p0.nx * r.width + 0.1, r.top + p0.ny * r.height);
+    else for (let i = 1; i < s.pts.length; i++) {
+      ctx.lineTo(r.left + s.pts[i].nx * r.width, r.top + s.pts[i].ny * r.height);
+    }
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function _lbInit() {
+  const canvas = document.getElementById('lb-pen-canvas');
+  const img = document.getElementById('img-lightbox-img');
+  if (!canvas || !img || canvas._lbReady) return;
+  canvas._lbReady = true;
+
+  const pt = e => {
+    const r = _lbImgRect();
+    return { nx: (e.clientX - r.left) / r.width, ny: (e.clientY - r.top) / r.height };
+  };
+
+  canvas.addEventListener('pointerdown', e => {
+    if (!_lbPenOn) return;
+    e.preventDefault();
+    const r = _lbImgRect();
+    if (!r || !r.width) return;
+    try { canvas.setPointerCapture(e.pointerId); } catch(_) {}
+    _lbCur = {
+      color: _lbColor,
+      wNorm: (_lbErasing ? _LB_ERASER_WIDTH : _lbWidth) / r.width,
+      erase: _lbErasing,
+      pts: [pt(e)]
+    };
+    const arr = _lbStrokes.get(_lbSrc) || [];
+    arr.push(_lbCur);
+    _lbStrokes.set(_lbSrc, arr);
+    _lbRedraw();
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!_lbPenOn || !_lbCur) return;
+    e.preventDefault();
+    const r = _lbImgRect();
+    const prev = _lbCur.pts[_lbCur.pts.length - 1];
+    const p = pt(e);
+    _lbCur.pts.push(p);
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.globalCompositeOperation = _lbCur.erase ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = _lbCur.color;
+    ctx.lineWidth = Math.max(1, _lbCur.wNorm * r.width);
+    ctx.beginPath();
+    ctx.moveTo(r.left + prev.nx * r.width, r.top + prev.ny * r.height);
+    ctx.lineTo(r.left + p.nx * r.width, r.top + p.ny * r.height);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  const end = e => {
+    if (!_lbCur) return;
+    _lbCur = null;
+    try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+  };
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+
+  // 이미지가 바뀌거나 늦게 로드되면 표시 크기가 달라지므로 다시 그린다
+  img.addEventListener('load', () => { _lbResize(); requestAnimationFrame(_lbResize); });
+  window.addEventListener('resize', _lbResize);
+}
+
+function toggleLightboxPen(force) {
+  const lb = document.getElementById('img-lightbox');
+  if (!lb) return;
+  _lbPenOn = (typeof force === 'boolean') ? force : !_lbPenOn;
+  lb.classList.toggle('pen-on', _lbPenOn);
+  document.getElementById('lb-pen-btn')?.classList.toggle('active', _lbPenOn);
+  if (_lbPenOn) { _lbInit(); _lbResize(); }
+  else {
+    _lbErasing = false;
+    document.getElementById('lb-eraser')?.classList.remove('active');
+  }
+}
+
+function setLbPenColor(color, btn) {
+  _lbColor = color;
+  _lbErasing = false;
+  document.getElementById('lb-eraser')?.classList.remove('active');
+  document.querySelectorAll('.lb-pen-tools .pen-color').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function setLbPenWidth(w, btn) {
+  _lbWidth = w;
+  document.querySelectorAll('.lb-pen-tools .pen-width').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function toggleLbEraser() {
+  _lbErasing = !_lbErasing;
+  document.getElementById('lb-eraser')?.classList.toggle('active', _lbErasing);
+}
+
+function clearLbPen() {
+  _lbStrokes.delete(_lbSrc);
+  _lbRedraw();
 }
 
 // ── 발표 중 펜 필기 ──
