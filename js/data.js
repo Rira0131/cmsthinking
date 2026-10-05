@@ -210,6 +210,7 @@ const TEACHERS_FALLBACK = [
   {email:'khs@sbcms.com',  name:'김향숙', aliases:['김향숙T'],                is_admin:true},
   {email:'gmj@sbcms.com',  name:'공미지', aliases:['공미지T'],                is_admin:false},
   {email:'kmk@sbcms.com',  name:'강민경', aliases:['강민경T'],                is_admin:true},
+  {email:'csi@sbcms.com',  name:'최성일', aliases:['최성일T'],                is_admin:false},
   {email:'rira@admin.com', name:'황지향', aliases:['황지향T','황지향 센터장'], is_admin:true},
   // 동래본원 (drcms.com)
   {email:'lhl@drcms.com',  name:'이향림', aliases:['이향림T'],                is_admin:true},
