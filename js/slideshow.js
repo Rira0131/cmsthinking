@@ -311,6 +311,7 @@ function renderSlide() {
         <div class="slide-act-body">
           <div>
             ${a.research ? `<div class="slide-act-research">${researchToDisplayHtml(a.research)}</div>` : '<div style="color:#64748b;font-style:italic">연구 내용 없음</div>'}
+            ${a.prompts ? `<div class="slide-act-prompts"><span class="slide-act-prompts-label">💬 발문 · 주의사항</span>${researchToDisplayHtml(a.prompts)}</div>` : ''}
             <div class="slide-act-extras">
               ${a.workbook ? `<span class="slide-extra-tag">📖 워크북: ${escHtml(a.workbook)}</span>` : ''}
               ${a.materials ? `<span class="slide-extra-tag">🧩 준비물: ${escHtml(a.materials)}</span>` : ''}

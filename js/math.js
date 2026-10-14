@@ -34,9 +34,7 @@ function _scheduleMathRender(container) {
 let _mathEditorState = null; // { editor, savedRange, editingSpan }
 
 function openMathEditorForResearch(btn) {
-  const wrap = btn.closest('.activity-editor');
-  if (!wrap) return;
-  const editor = wrap.querySelector('.act-research');
+  const editor = _researchEditorFor(btn);
   if (!editor) return;
   editor.focus();
   // 현재 커서 위치 저장 (활동 연구 에디터 내부일 때만)
@@ -158,7 +156,7 @@ function deleteMathEditor() {
 document.addEventListener('dblclick', function(e) {
   const span = e.target && e.target.closest && e.target.closest('span.math');
   if (!span) return;
-  const editor = span.closest('.act-research');
+  const editor = span.closest('.research-editor');
   if (!editor || !editor.isContentEditable) return;
   e.preventDefault();
   const range = document.createRange();

@@ -87,17 +87,17 @@ async function saveLesson() {
       const images = imgGrid
         ? Array.from(imgGrid.querySelectorAll('.img-thumb')).map(t => t.dataset.src).filter(Boolean)
         : [];
-      const researchEl = ae.querySelector('.act-research');
       // contenteditable이면 innerHTML(정화) 사용, 구버전 textarea 호환을 위해 value도 fallback
-      let researchVal = '';
-      if (researchEl) {
-        if (researchEl.isContentEditable || researchEl.getAttribute('contenteditable') === 'true') {
-          const plain = (researchEl.textContent || '').trim();
-          researchVal = plain ? sanitizeResearchHtml(researchEl.innerHTML).trim() : '';
-        } else {
-          researchVal = (researchEl.value || '').trim();
+      const readEditor = (el) => {
+        if (!el) return '';
+        if (el.isContentEditable || el.getAttribute('contenteditable') === 'true') {
+          const plain = (el.textContent || '').trim();
+          return plain ? sanitizeResearchHtml(el.innerHTML).trim() : '';
         }
-      }
+        return (el.value || '').trim();
+      };
+      const researchVal = readEditor(ae.querySelector('.act-research'));
+      const promptsVal = readEditor(ae.querySelector('.act-prompts'));
       // 활동별 참고 링크 (유튜브 등) — 빈 URL 행은 제외
       const actLinks = Array.from(ae.querySelectorAll('.act-link-row')).map(row => ({
         label: row.querySelector('.link-label').value.trim(),
@@ -106,6 +106,7 @@ async function saveLesson() {
       activities.push({
         name,
         research: researchVal,
+        prompts: promptsVal,
         materials: ae.querySelector('.act-materials').value.trim(),
         time: ae.querySelector('.act-time').value.trim(),
         workbook: ae.querySelector('.act-workbook') ? ae.querySelector('.act-workbook').value.trim() : '',
@@ -249,7 +250,7 @@ function loadLessonToEditor(id, isCustom) {
   (l.attachments || []).forEach(att => addAttachmentRow(att.name, att.url, att.size));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
-  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[]));
+  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[], a.prompts||''));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
 
   // 아코디언: 내용 있는 섹션 자동 열기
@@ -304,7 +305,7 @@ function editCustomLesson(id) {
   (l.attachments || []).forEach(att => addAttachmentRow(att.name, att.url, att.size));
   document.getElementById('ed-activities').innerHTML = '';
   activityCount = 0;
-  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[]));
+  (l.activities || []).forEach(a => addActivityEditor(a.name, a.research, a.materials, a.time, a.workbook||'', a.images||[], a.links||[], a.prompts||''));
   if (!l.activities || l.activities.length === 0) addActivityEditor();
 
   // 아코디언: 내용 있는 섹션 자동 열기
@@ -857,6 +858,7 @@ function printLesson(idx) {
       <div class="act-body">
         ${a.workbook ? `<div class="act-workbook">📖 워크북 연계: ${a.workbook}</div>` : ''}
         ${a.research ? `<div class="act-research">${researchToDisplayHtml(a.research)}</div>` : ''}
+        ${a.prompts ? `<div class="act-prompts"><span class="act-prompts-label">💬 발문 · 주의사항</span>${researchToDisplayHtml(a.prompts)}</div>` : ''}
         ${a.materials ? `<div class="act-materials">🧩 준비물: ${a.materials}</div>` : ''}
         ${(a.links && a.links.length > 0) ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #E5E7EB"><div style="font-size:9pt;font-weight:700;color:#4F46E5;margin-bottom:3px">🔗 참고 링크</div>${a.links.map(lk => `<div style="font-size:9pt"><a href="${lk.url}" target="_blank" style="color:#4F46E5;text-decoration:underline;word-break:break-all">${(lk.label||lk.url)}</a></div>`).join('')}</div>` : ''}
         ${a.images && a.images.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${a.images.map(src => `<img src="${src}" style="max-width:200px;max-height:150px;border-radius:4px;border:1px solid #E5E7EB;object-fit:contain">`).join('')}</div>` : ''}
@@ -976,6 +978,8 @@ function printLesson(idx) {
   }
   .act-workbook { font-size: 9pt; color: #2563EB; font-weight: 700; margin-bottom: 4px; }
   .act-research { font-size: 9.5pt; color: #374151; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+  .act-prompts { margin-top: 6px; padding: 6px 9px; background: #FFF7ED; border-left: 2.5pt solid #FB923C; font-size: 9.5pt; color: #374151; line-height: 1.7; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
+  .act-prompts-label { display: block; font-size: 8pt; font-weight: 700; color: #C2410C; margin-bottom: 2px; }
   .act-materials {
     margin-top: 5px;
     font-size: 9pt;

@@ -93,6 +93,8 @@ a{color:var(--primary);text-decoration:none}
 .activity-name{font-weight:700;font-size:14px;margin-bottom:6px;display:flex;justify-content:space-between}
 .activity-time{font-size:11px;color:var(--gray-500);background:var(--gray-200);padding:2px 8px;border-radius:10px}
 .activity-research{font-size:13px;color:var(--gray-700);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.activity-prompts{margin-top:10px;padding:10px 12px;background:#FFF7ED;border-left:3px solid #FB923C;border-radius:0 8px 8px 0;font-size:13px;color:var(--gray-700);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.activity-prompts-label{display:block;font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px}
 .activity-workbook{font-size:12px;color:var(--blue);margin-top:4px;font-weight:600}
 .activity-materials{font-size:12px;color:var(--orange);margin-top:6px;font-weight:500}
 
@@ -527,6 +529,9 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-act-time{display:inline-block;background:var(--sl-accent-soft);color:var(--sl-accent);padding:3px 12px;border-radius:12px;font-size:13px;margin-bottom:20px}
 .slide-act-body{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start}
 .slide-act-research{font-size:16px;color:var(--sl-fg-soft);line-height:1.85;white-space:pre-wrap}
+.slide-act-prompts{margin-top:14px;padding:12px 16px;background:rgba(251,146,60,.12);border-left:4px solid #FB923C;border-radius:0 10px 10px 0;font-size:15px;color:var(--sl-fg-soft);line-height:1.8;white-space:pre-wrap}
+.slide-act-prompts-label{display:block;font-size:12px;font-weight:700;color:#EA580C;margin-bottom:6px}
+#slideshow-overlay.theme-dark .slide-act-prompts-label{color:#FDBA74}
 .slide-act-imgs{display:flex;flex-direction:column;gap:8px;max-width:240px}
 .slide-act-imgs img{width:100%;border-radius:10px;object-fit:cover;max-height:160px;cursor:zoom-in;transition:transform .15s ease,box-shadow .15s ease}
 /* 이미지가 4장 이상이면 2열 그리드로 전환 — 세로로 너무 길어지지 않도록 */

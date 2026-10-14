@@ -1,7 +1,15 @@
+// 툴바가 어느 입력칸에 속하는지 — 활동 연구와 발문·주의사항이 같은 툴바 구조를 쓰므로
+// 버튼이 속한 툴바 바로 다음 에디터를 대상으로 삼는다.
+function _researchEditorFor(btn) {
+  const tb = btn.closest && btn.closest('.research-toolbar');
+  const next = tb && tb.nextElementSibling;
+  if (next && next.classList.contains('research-editor')) return next;
+  const wrap = btn.closest && btn.closest('.activity-editor');
+  return wrap ? wrap.querySelector('.act-research') : null;
+}
+
 function applyResearchFormat(btn, cmd, value) {
-  const wrap = btn.closest('.activity-editor');
-  if (!wrap) return;
-  const editor = wrap.querySelector('.act-research');
+  const editor = _researchEditorFor(btn);
   if (!editor) return;
   const sel = window.getSelection();
   let inside = false;
@@ -70,8 +78,29 @@ function buildResearchToolbarHtml() {
     </div>`;
 }
 
+// 활동 연구 / 발문·주의사항 — 같은 서식 에디터라 설정도 공유한다
+function _setupResearchEditor(el, content) {
+  if (!el) return;
+  el.innerHTML = researchToDisplayHtml(content || '');
+  _scheduleMathRender(el);
+  updateResearchEmpty(el);
+  el.addEventListener('input', () => updateResearchEmpty(el));
+  el.addEventListener('blur', () => updateResearchEmpty(el));
+  el.addEventListener('paste', (e) => {
+    const html = e.clipboardData && e.clipboardData.getData('text/html');
+    const text = e.clipboardData && e.clipboardData.getData('text/plain');
+    if (html) {
+      e.preventDefault();
+      document.execCommand('insertHTML', false, sanitizeResearchHtml(html));
+    } else if (text) {
+      e.preventDefault();
+      document.execCommand('insertText', false, text);
+    }
+  });
+}
+
 let activityCount = 0;
-function addActivityEditor(name='', research='', materials='', time='', workbook='', images=[], links=[]) {
+function addActivityEditor(name='', research='', materials='', time='', workbook='', images=[], links=[], prompts='') {
   activityCount++;
   const id = activityCount;
   const container = document.getElementById('ed-activities');
@@ -98,6 +127,11 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
       <label class="form-label">활동 연구</label>
       ${buildResearchToolbarHtml()}
       <div class="research-editor act-research" contenteditable="true" data-placeholder="활동 연구 내용을 입력하세요. 위 툴바로 굵게·색상·형광펜을 적용할 수 있어요."></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">💬 발문 · 주의사항</label>
+      ${buildResearchToolbarHtml()}
+      <div class="research-editor act-prompts" contenteditable="true" data-placeholder="수업 중 던질 발문이나 주의할 점을 적어두세요."></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><label class="form-label">준비물</label><input type="text" class="form-input act-materials" value="${escHtml(materials)}"></div>
@@ -132,26 +166,9 @@ function addActivityEditor(name='', research='', materials='', time='', workbook
     const linksContainer = div.querySelector('.act-links');
     links.forEach(lk => _appendActLinkRow(linksContainer, lk.label || '', lk.url || ''));
   }
-  // 활동 연구 contenteditable 초기 콘텐츠 주입 (구버전 평문/신버전 HTML 모두 대응)
-  const researchEditor = div.querySelector('.act-research');
-  if (researchEditor) {
-    researchEditor.innerHTML = researchToDisplayHtml(research);
-    _scheduleMathRender(researchEditor);
-    updateResearchEmpty(researchEditor);
-    researchEditor.addEventListener('input', () => updateResearchEmpty(researchEditor));
-    researchEditor.addEventListener('blur', () => updateResearchEmpty(researchEditor));
-    researchEditor.addEventListener('paste', (e) => {
-      const html = e.clipboardData && e.clipboardData.getData('text/html');
-      const text = e.clipboardData && e.clipboardData.getData('text/plain');
-      if (html) {
-        e.preventDefault();
-        document.execCommand('insertHTML', false, sanitizeResearchHtml(html));
-      } else if (text) {
-        e.preventDefault();
-        document.execCommand('insertText', false, text);
-      }
-    });
-  }
+  // 서식 에디터 초기 콘텐츠 주입 (구버전 평문/신버전 HTML 모두 대응)
+  _setupResearchEditor(div.querySelector('.act-research'), research);
+  _setupResearchEditor(div.querySelector('.act-prompts'), prompts);
   if (images && images.length > 0) {
     images.forEach(src => addImgPreview(id, src));
   }

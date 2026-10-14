@@ -130,7 +130,7 @@ function filterLessons() {
     if (query) {
       const searchText = [l.title, l.objectives, l.teacher_objectives, l.notes,
         l.gyogwa_grade || '', l.gyogwa_unit || '',
-        ...l.activities.map(a => a.name + ' ' + researchToPlainText(a.research))
+        ...l.activities.map(a => a.name + ' ' + researchToPlainText(a.research) + ' ' + researchToPlainText(a.prompts))
       ].join(' ').toLowerCase();
       if (!searchText.includes(query)) return false;
     }
@@ -204,6 +204,7 @@ function filterLessons() {
                   </div>
                   ${a.workbook ? `<div class="activity-workbook">📖 워크북 연계: ${highlightText(a.workbook, query)}</div>` : ''}
                   ${a.research ? `<div class="activity-research">${researchToDisplayHtml(a.research, query)}</div>` : ''}
+                  ${a.prompts ? `<div class="activity-prompts"><span class="activity-prompts-label">💬 발문 · 주의사항</span>${researchToDisplayHtml(a.prompts, query)}</div>` : ''}
                   ${a.materials ? `<div class="activity-materials">🧩 준비물: ${a.materials}</div>` : ''}
                   ${(a.links && a.links.length > 0) ? `<div class="activity-links" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--gray-200)"><div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:2px">🔗 참고 링크</div>${a.links.map(lk => `<a href="${lk.url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:underline;font-size:13px;word-break:break-all">${escHtml(lk.label || lk.url)}</a>`).join('')}</div>` : ''}
                   ${a.images && a.images.length > 0 ? '<div class="view-img-grid">' + a.images.map(src => '<div class="view-img-thumb"><img src="' + src + '" onclick="openLightbox(this.src)" title="클릭"></div>').join('') + '</div>' : ''}
