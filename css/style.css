@@ -394,6 +394,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .lb-pen-tools .pen-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
 .lb-pen-tools .pen-color:hover{transform:scale(1.15)}
 .lb-pen-tools .pen-color.active{border-color:#fff;transform:scale(1.15)}
+.lb-pen-tools .pen-color.is-white.active{border-color:#6366F1}
 .lb-pen-tools .pen-width{background:rgba(255,255,255,.18);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .lb-pen-tools .pen-width span{display:block;background:#fff;border-radius:50%}
 .lb-pen-tools .pen-width:hover,.lb-pen-tools .pen-width.active{background:#6366F1}
@@ -500,6 +501,8 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .slide-pen-tools .pen-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
 .slide-pen-tools .pen-color:hover{transform:scale(1.15)}
 .slide-pen-tools .pen-color.active{border-color:var(--sl-accent);transform:scale(1.15)}
+/* 흰색 견본은 밝은 배경에서 안 보이므로 테두리를 그려준다 */
+.pen-color.is-white{box-shadow:inset 0 0 0 1px #9CA3AF}
 .slide-pen-tools .pen-sep{width:1px;height:18px;background:var(--sl-btn-bg);flex-shrink:0}
 .slide-pen-tools .pen-width{background:var(--sl-btn-bg);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .slide-pen-tools .pen-width span{display:block;background:var(--sl-btn-fg);border-radius:50%;transition:background .15s}
