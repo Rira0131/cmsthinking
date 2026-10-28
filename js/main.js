@@ -36,6 +36,14 @@ function updateGyogwaUnits(selectUnit) {
     if (selectUnit && u === selectUnit) opt.selected = true;
     unitEl.appendChild(opt);
   });
+  // 교육과정 목록이 바뀌기 전에 저장된 단원은 목록에 없을 수 있다.
+  // 그대로 선택지로 넣어줘야 교안을 다시 저장할 때 단원이 조용히 지워지지 않는다.
+  if (selectUnit && !units.includes(selectUnit)) {
+    const opt = document.createElement('option');
+    opt.value = selectUnit; opt.textContent = selectUnit;
+    opt.selected = true;
+    unitEl.appendChild(opt);
+  }
 }
 
 // 활동 에디터의 + 추가 버튼 → 그 활동의 act-links 안에 한 행 추가
