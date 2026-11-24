@@ -4,7 +4,9 @@ const ALL_LEVELS = [
   'Pre-IG','IG-V','IG-O','IG-N','IG-K',
   'Pre-A','Pre-R','Pre-C','Pre-H','Pre-E','Pre-S',
   '1레벨','2레벨','3레벨','4레벨','5레벨','6레벨','7레벨',
-  '8레벨','9레벨','10레벨','11레벨','12레벨','13레벨','14레벨','15레벨'
+  '8레벨','9레벨','10레벨','11레벨','12레벨','13레벨','14레벨','15레벨',
+  // MASTER — 10레벨 이상 최상위 과정 (2026.12 개강). 레벨당 교재 3권
+  'MASTER Ⅰ-1','MASTER Ⅰ-2','MASTER Ⅱ-1','MASTER Ⅱ-2'
 ];
 function sortLevels(levels) {
   return levels.sort((a, b) => {

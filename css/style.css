@@ -282,6 +282,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 2px;border-radius
 .curr-section.sec-ig .curr-section-header{background:#FFD93D;color:#5C3D35}
 .curr-section.sec-pre .curr-section-header{background:#FFB3CC;color:#7A1F3D}
 .curr-section.sec-why .curr-section-header{background:linear-gradient(135deg,#4ECDC4,#3DB5A8);color:#fff}
+.curr-section.sec-master .curr-section-header{background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff}
 .curr-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .curr-cell{background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:6px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:3px;min-height:80px}
 .curr-cell:hover{border-color:var(--primary);box-shadow:0 4px 10px rgba(0,0,0,.08);transform:translateY(-1px)}
